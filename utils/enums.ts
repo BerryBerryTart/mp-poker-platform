@@ -1,0 +1,82 @@
+enum Card {
+  // HEARTS
+  HEART_ONE = "H1",
+  HEART_TWO = "H2",
+  HEART_THREE = "H3",
+  HEART_FOUR = "H4",
+  HEART_FIVE = "H5",
+  HEART_SIX = "H6",
+  HEART_SEVEN = "H7",
+  HEART_EIGHT = "H8",
+  HEART_NINE = "H9",
+  HEART_TEN = "H10",
+  HEART_JACK = "HJ",
+  HEART_QUEEN = "HQ",
+  HEART_KING = "HK",
+  HEART_ACE = "HA",
+
+  // DIAMONDS
+  DIAMOND_ONE = "D1",
+  DIAMOND_TWO = "D2",
+  DIAMOND_THREE = "D3",
+  DIAMOND_FOUR = "D4",
+  DIAMOND_FIVE = "D5",
+  DIAMOND_SIX = "D6",
+  DIAMOND_SEVEN = "D7",
+  DIAMOND_EIGHT = "D8",
+  DIAMOND_NINE = "D9",
+  DIAMOND_TEN = "D10",
+  DIAMOND_JACK = "DJ",
+  DIAMOND_QUEEN = "DQ",
+  DIAMOND_KING = "DK",
+  DIAMOND_ACE = "DA",
+
+  //SPADES
+  SPADE_ONE = "S1",
+  SPADE_TWO = "S2",
+  SPADE_THREE = "S3",
+  SPADE_FOUR = "S4",
+  SPADE_FIVE = "S5",
+  SPADE_SIX = "S6",
+  SPADE_SEVEN = "S7",
+  SPADE_EIGHT = "S8",
+  SPADE_NINE = "S9",
+  SPADE_TEN = "S10",
+  SPADE_JACK = "SJ",
+  SPADE_QUEEN = "SQ",
+  SPADE_KING = "SK",
+  SPADE_ACE = "SA",
+
+  // CLUBS
+  CLUB_ONE = "C1",
+  CLUB_TWO = "C2",
+  CLUB_THREE = "C3",
+  CLUB_FOUR = "C4",
+  CLUB_FIVE = "C5",
+  CLUB_SIX = "C6",
+  CLUB_SEVEN = "C7",
+  CLUB_EIGHT = "C8",
+  CLUB_NINE = "C9",
+  CLUB_TEN = "C10",
+  CLUB_JACK = "CJ",
+  CLUB_QUEEN = "CQ",
+  CLUB_KING = "CK",
+  CLUB_ACE = "CA",
+}
+
+enum HandType {
+  ROYAL_FLUSH = "ROYAL_FLUSH",
+  STRAIGHT_FLUSH = "STRAIGHT_FLUSH",
+  FOUR_OF_A_KIND = "FOUR_OF_A_KIND",
+  FULL_HOUSE = "FULL_HOUSE",
+  FLUSH = "FLUSH",
+  STRAIGHT = "STRAIGHT",
+  THREE_OF_A_KIND = "THREE_OF_A_KIND",
+  TWO_PAIR = "TWO_PAIR",
+  ONE_PAIR = "ONE_PAIR",
+  HIGH_CARD = "HIGH_CARD",
+}
+
+enum ServerEvent {}
+
+export { Card, HandType, ServerEvent };
