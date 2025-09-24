@@ -3,141 +3,183 @@ import { Player, Game } from "./types";
 
 const getHandType = (player: Player, game: Game): HandType => {
   // aggregate cards into an array for analysis
-  const handArr = [];
+  const handArr: Card[] = [];
   handArr.push(...player.hand);
   handArr.push(...game.flop);
   if (game.turn) handArr.push(game.turn);
   if (game.river) handArr.push(game.river);
 
-  //Reduce to like numbers
-  const reducedHand = [];
-  for (let i = 0; i < handArr.length; i++) {
-    reducedHand.push(reduceCardType(handArr[i]));
-  }
-  console.log(reducedHand);
+  //Sort things so it's easier to do work later
+  handArr.sort(compareCards);
 
-  //Handle two pair
+  //Reduce to like numbers
+  const reducedHand: number[] = [];
+  for (let i = 0; i < handArr.length; i++) {
+    reducedHand.push(getCardNumber(handArr[i]));
+  }
+
+  // const cardCounts = Object.values(cardCountObj);
+  const cardCounts = getCardCounts(reducedHand);
+
+  //handle royal flush
+  if (
+    reducedHand.includes(14) &&
+    reducedHand.includes(13) &&
+    reducedHand.includes(12) &&
+    reducedHand.includes(11) &&
+    reducedHand.includes(10)
+  ) {
+    for (let i = 0; i < handArr.length; i++) {
+      //10 is first in the sequence so we can work with that
+      const firstCard = handArr[i];
+      if (getCardNumber(firstCard) !== 10) continue;
+      const firstSuit = getCardSuit(firstCard);
+
+      //check rest of array in sequence
+      let nextNum = 11;
+      for (let j = i + 1; j < handArr.length; j++) {
+        if (handArr.includes(`${firstSuit}${nextNum}` as Card)) {
+          if (nextNum === 14) {
+            return HandType.ROYAL_FLUSH;
+          }
+          nextNum++;
+          continue;
+        } else {
+          //next card not found so stop searching
+          break;
+        }
+      }
+    }
+  }
+
+  //handle straight flush
+  for (let i = 0; i < handArr.length; i++) {
+    const firstCard = handArr[i];
+    const firstSuit = getCardSuit(firstCard);
+
+    //keep track of sequence hits
+    let counter = 1;
+    let nextNum = getCardNumber(firstCard);
+    //check rest of array in sequence
+    for (let j = i + 1; j < handArr.length; j++) {
+      const nextCard = handArr[j];
+      if (
+        getCardSuit(nextCard) === firstSuit &&
+        handArr.includes(`${firstSuit}${nextNum}` as Card)
+      ) {
+        counter++;
+        nextNum++;
+        if (counter === 5) {
+          return HandType.STRAIGHT_FLUSH;
+        }
+      } else {
+        //next card not found so stop searching
+        break;
+      }
+    }
+  }
+
+  //Handle four of a kind
+  if (cardCounts.includes(4)) {
+    return HandType.FOUR_OF_A_KIND;
+  }
+
+  //Handle full house
+  if (cardCounts.includes(3) && cardCounts.includes(2)) {
+    return HandType.FULL_HOUSE;
+  }
+
+  //handle flush
+  for (let i = 0; i < handArr.length; i++) {
+    const firstCard = handArr[i];
+    const firstSuit = getCardSuit(firstCard);
+
+    //keep track of sequence hits
+    let counter = 1;
+    //check rest of array in sequence
+    for (let j = i + 1; j < handArr.length; j++) {
+      const nextCard = handArr[j];
+      if (getCardSuit(nextCard) === firstSuit) {
+        counter++;
+        if (counter === 5) {
+          return HandType.FLUSH;
+        }
+      }
+    }
+  }
+
+  //handle straight
+  for (let i = 0; i < handArr.length; i++) {
+    const firstCard = handArr[i];
+
+    //keep track of sequence hits
+    let counter = 1;
+    let nextNum = getCardNumber(firstCard);
+    //check rest of array in sequence
+    for (let j = i + 1; j < handArr.length; j++) {
+      if (reducedHand.includes(nextNum)) {
+        counter++;
+        nextNum++;
+        if (counter === 5) {
+          return HandType.STRAIGHT;
+        }
+      } else {
+        //next card not found so stop searching
+        break;
+      }
+    }
+  }
+
+  //Handle three of a kind
+  if (cardCounts.includes(3)) {
+    return HandType.THREE_OF_A_KIND;
+  }
+
+  //Handle one pair and two pair
+  if (cardCounts.includes(2)) {
+    let multiples = 0;
+    for (let i = 0; i < cardCounts.length; i++) {
+      if (cardCounts[i] === 2) multiples++;
+    }
+    if (multiples > 1) return HandType.TWO_PAIR;
+    return HandType.ONE_PAIR;
+  }
 
   // DEFAULT: return high card
   return HandType.HIGH_CARD;
 };
 
-const reduceCardType = (card: Card) => {
-  if (
-    card === Card.CLUB_ONE ||
-    card === Card.SPADE_ONE ||
-    card === Card.HEART_ONE ||
-    card === Card.DIAMOND_ONE
-  ) {
+const getCardNumber = (card: Card | string): number => {
+  const pattern = /(\d{1,})/;
+  const re = new RegExp(pattern);
+  const result = re.exec(card.toString())?.[0];
+
+  if (result && parseInt(result) !== Number.NaN) {
+    return parseInt(result);
+  }
+  return -1;
+};
+
+const getCardSuit = (card: Card): string => {
+  return card.toString()[0];
+};
+
+const getCardCounts = (cardArr: number[]): number[] => {
+  const cardCountObj: { [index: string]: number } = {};
+  cardArr.forEach(function (x) {
+    cardCountObj[x] = (cardCountObj[x] || 0) + 1;
+  });
+
+  return Object.values(cardCountObj);
+};
+
+const compareCards = (a: string | Card, b: string | Card) => {
+  if (getCardNumber(a) < getCardNumber(b)) {
+    return -1;
+  } else if (getCardNumber(a) < getCardNumber(b)) {
     return 1;
   }
-  if (
-    card === Card.CLUB_TWO ||
-    card === Card.SPADE_TWO ||
-    card === Card.HEART_TWO ||
-    card === Card.DIAMOND_TWO
-  ) {
-    return 2;
-  }
-  if (
-    card === Card.CLUB_THREE ||
-    card === Card.SPADE_THREE ||
-    card === Card.HEART_THREE ||
-    card === Card.DIAMOND_THREE
-  ) {
-    return 3;
-  }
-  if (
-    card === Card.CLUB_FOUR ||
-    card === Card.SPADE_FOUR ||
-    card === Card.HEART_FOUR ||
-    card === Card.DIAMOND_FOUR
-  ) {
-    return 4;
-  }
-  if (
-    card === Card.CLUB_FIVE ||
-    card === Card.SPADE_FIVE ||
-    card === Card.HEART_FIVE ||
-    card === Card.DIAMOND_FIVE
-  ) {
-    return 5;
-  }
-  if (
-    card === Card.CLUB_SIX ||
-    card === Card.SPADE_SIX ||
-    card === Card.HEART_SIX ||
-    card === Card.DIAMOND_SIX
-  ) {
-    return 6;
-  }
-  if (
-    card === Card.CLUB_SEVEN ||
-    card === Card.SPADE_SEVEN ||
-    card === Card.HEART_SEVEN ||
-    card === Card.DIAMOND_SEVEN
-  ) {
-    return 7;
-  }
-  if (
-    card === Card.CLUB_EIGHT ||
-    card === Card.SPADE_EIGHT ||
-    card === Card.HEART_EIGHT ||
-    card === Card.DIAMOND_EIGHT
-  ) {
-    return 8;
-  }
-  if (
-    card === Card.CLUB_NINE ||
-    card === Card.SPADE_NINE ||
-    card === Card.HEART_NINE ||
-    card === Card.DIAMOND_NINE
-  ) {
-    return 9;
-  }
-  if (
-    card === Card.CLUB_TEN ||
-    card === Card.SPADE_TEN ||
-    card === Card.HEART_TEN ||
-    card === Card.DIAMOND_TEN
-  ) {
-    return 10;
-  }
-  if (
-    card === Card.CLUB_JACK ||
-    card === Card.SPADE_JACK ||
-    card === Card.HEART_JACK ||
-    card === Card.DIAMOND_JACK
-  ) {
-    return 11;
-  }
-  if (
-    card === Card.CLUB_QUEEN ||
-    card === Card.SPADE_QUEEN ||
-    card === Card.HEART_QUEEN ||
-    card === Card.DIAMOND_QUEEN
-  ) {
-    return 12;
-  }
-  if (
-    card === Card.CLUB_KING ||
-    card === Card.SPADE_KING ||
-    card === Card.HEART_KING ||
-    card === Card.DIAMOND_KING
-  ) {
-    return 13;
-  }
-  if (
-    card === Card.CLUB_ACE ||
-    card === Card.SPADE_ACE ||
-    card === Card.HEART_ACE ||
-    card === Card.DIAMOND_ACE
-  ) {
-    return 14;
-  }
-
-  //Something definitely went wrong if we reach this
-  return -1;
+  return 0;
 };
 
 export { getHandType };

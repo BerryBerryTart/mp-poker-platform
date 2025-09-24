@@ -10,10 +10,10 @@ enum Card {
   HEART_EIGHT = "H8",
   HEART_NINE = "H9",
   HEART_TEN = "H10",
-  HEART_JACK = "HJ",
-  HEART_QUEEN = "HQ",
-  HEART_KING = "HK",
-  HEART_ACE = "HA",
+  HEART_JACK = "H11",
+  HEART_QUEEN = "H12",
+  HEART_KING = "H13",
+  HEART_ACE = "H14",
 
   // DIAMONDS
   DIAMOND_ONE = "D1",
@@ -26,10 +26,10 @@ enum Card {
   DIAMOND_EIGHT = "D8",
   DIAMOND_NINE = "D9",
   DIAMOND_TEN = "D10",
-  DIAMOND_JACK = "DJ",
-  DIAMOND_QUEEN = "DQ",
-  DIAMOND_KING = "DK",
-  DIAMOND_ACE = "DA",
+  DIAMOND_JACK = "D11",
+  DIAMOND_QUEEN = "D12",
+  DIAMOND_KING = "D13",
+  DIAMOND_ACE = "D14",
 
   //SPADES
   SPADE_ONE = "S1",
@@ -42,10 +42,10 @@ enum Card {
   SPADE_EIGHT = "S8",
   SPADE_NINE = "S9",
   SPADE_TEN = "S10",
-  SPADE_JACK = "SJ",
-  SPADE_QUEEN = "SQ",
-  SPADE_KING = "SK",
-  SPADE_ACE = "SA",
+  SPADE_JACK = "S11",
+  SPADE_QUEEN = "S12",
+  SPADE_KING = "S13",
+  SPADE_ACE = "S14",
 
   // CLUBS
   CLUB_ONE = "C1",
@@ -58,10 +58,10 @@ enum Card {
   CLUB_EIGHT = "C8",
   CLUB_NINE = "C9",
   CLUB_TEN = "C10",
-  CLUB_JACK = "CJ",
-  CLUB_QUEEN = "CQ",
-  CLUB_KING = "CK",
-  CLUB_ACE = "CA",
+  CLUB_JACK = "C11",
+  CLUB_QUEEN = "C12",
+  CLUB_KING = "C13",
+  CLUB_ACE = "C14",
 }
 
 enum HandType {
