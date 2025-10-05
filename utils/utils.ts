@@ -292,4 +292,4 @@ class GameManger {
   getRoundWinner() {}
 }
 
-export { getHandType, sortPlayers, GameManger };
+export { getHandType, sortPlayers, GameManger, getCardNumber };

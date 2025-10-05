@@ -1,5 +1,7 @@
 import { Card } from "../../utils/enums";
-import ".Card.less";
+import { getCardNumber } from "../../utils/utils";
+
+import "./CardDisplay.less";
 import Club from "../Assets/Club.svg";
 import Spade from "../Assets/Spade.svg";
 import Heart from "../Assets/Heart.svg";
@@ -12,20 +14,50 @@ export interface CardProps {
 export const CardDisplay = (props: CardProps) => {
   const { card } = props;
 
-  const getSuitIcon = (card: Card) => {
+  const getCardComp = (card: Card) => {
     const suitChar = card.toString()[0];
+    const cardNum = getCardNumber(card);
+    let cardStr = "";
+    let cardImg;
     switch (suitChar) {
       case "C":
-        return Club;
+        cardImg = Club;
+        break;
       case "S":
-        return Spade;
+        cardImg = Spade;
+        break;
       case "H":
-        return Heart;
+        cardImg = Heart;
+        break;
       case "D":
-        return Diamond;
+        cardImg = Diamond;
+        break;
     }
-    return undefined;
+
+    switch (cardNum) {
+      case 11:
+        cardStr = "J";
+        break;
+      case 12:
+        cardStr = "Q";
+        break;
+      case 13:
+        cardStr = "K";
+        break;
+      case 14:
+        cardStr = "A";
+        break;
+      default:
+        cardStr = cardNum.toString();
+    }
+
+    return (
+      <>
+        <img className="suit-icon" src={cardImg} />
+        <span className="card-text">{cardStr}</span>
+      </>
+    );
   };
 
-  return <div className="card-container"></div>;
+  return <div className="card-container">{getCardComp(card)}</div>;
 };

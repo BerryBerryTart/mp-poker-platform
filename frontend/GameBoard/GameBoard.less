@@ -1,0 +1,62 @@
+#game-board-container {
+  #players-container {
+    margin: 10px;
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    .player-card {
+      max-width: 150px;
+      margin-left: 5px;
+      margin-right: 5px;
+    }
+  }
+  #community-hand-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    #community-cards {
+      display: flex;
+      flex-direction: row;
+      border: 1px grey solid;
+      padding: 5px;
+      .card-container {
+        margin: 5px;
+      }
+    }
+  }
+  #info-container {
+    position: fixed;
+    bottom: 10px;
+    width: 100vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    #your-info {
+      display: flex;
+      flex-direction: column;
+      #your-hand-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        #your-hand {
+          display: flex;
+          flex-direction: row;
+          .card-container {
+            margin: 5px;
+          }
+        }
+      }
+      #your-actions {
+        display: flex;
+        flex-direction: column;
+        justify-content: end;
+        align-items: center;
+        #buttons .ant-btn {
+          margin-left: 5px;
+          margin-right: 5px;
+        }
+      }
+    }
+  }
+}

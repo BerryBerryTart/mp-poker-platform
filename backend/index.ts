@@ -13,3 +13,7 @@ const io = new Server(server, {
 
 app.use(express.json());
 app.use(cors());
+
+const onConnection = (socket: any) => {};
+
+io.on("connection", onConnection);

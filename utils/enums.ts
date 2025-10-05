@@ -100,4 +100,9 @@ enum PlayerAction {
   RAISE = "RAISE",
 }
 
-export { Card, HandType, SocketEvent, GameState, PlayerAction };
+enum Theme {
+  DARK = "DARK",
+  LIGHT = "LIGHT",
+}
+
+export { Card, HandType, SocketEvent, GameState, PlayerAction, Theme };
