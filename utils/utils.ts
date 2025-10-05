@@ -1,22 +1,33 @@
-import { Card, HandType } from "./enums";
-import { Player, Game } from "./types";
+import { Card, GameState, HandType } from "./enums";
+import { Player, Game, GameConfigType } from "./types";
+
+const gameActionFlow = [
+  GameState.PRE_GAME,
+  GameState.GAME_START,
+  GameState.ANTE,
+  GameState.FLOP,
+  GameState.PLAYERS_BETTING,
+  GameState.TURN,
+  GameState.PLAYERS_BETTING,
+  GameState.RIVER,
+  GameState.ROUND_END,
+  GameState.GAME_END,
+];
 
 const getHandType = (player: Player, game: Game): HandType => {
   // aggregate cards into an array for analysis
   const handArr: Card[] = [];
   handArr.push(...player.hand);
   handArr.push(...game.flop);
-  if (game.turn) handArr.push(game.turn);
-  if (game.river) handArr.push(game.river);
+  return getHandTypeFromArray(handArr);
+};
 
+const getHandTypeFromArray = (handArr: Card[]): HandType => {
   //Sort things so it's easier to do work later
   handArr.sort(compareCards);
 
   //Reduce to like numbers
-  const reducedHand: number[] = [];
-  for (let i = 0; i < handArr.length; i++) {
-    reducedHand.push(getCardNumber(handArr[i]));
-  }
+  const reducedHand: number[] = getCardNumberArr(handArr);
 
   // const cardCounts = Object.values(cardCountObj);
   const cardCounts = getCardCounts(reducedHand);
@@ -149,6 +160,72 @@ const getHandType = (player: Player, game: Game): HandType => {
   return HandType.HIGH_CARD;
 };
 
+const getHandTypeRank = (handType: HandType): number => {
+  switch (handType) {
+    case HandType.HIGH_CARD:
+      return 1;
+    case HandType.ONE_PAIR:
+      return 2;
+    case HandType.TWO_PAIR:
+      return 3;
+    case HandType.THREE_OF_A_KIND:
+      return 4;
+    case HandType.STRAIGHT:
+      return 5;
+    case HandType.FLUSH:
+      return 6;
+    case HandType.FULL_HOUSE:
+      return 7;
+    case HandType.FOUR_OF_A_KIND:
+      return 8;
+    case HandType.STRAIGHT_FLUSH:
+      return 9;
+    case HandType.ROYAL_FLUSH:
+      return 10;
+    default:
+      return -1;
+  }
+};
+
+//sort players from best hand to worst hand
+const sortPlayers = (game: Game) => {
+  // aggregate cards into an array for analysis
+  const baseHand: Card[] = [...game.flop];
+  game.players.sort((p1, p2) =>
+    comparePlayers([...baseHand, ...p1.hand], [...baseHand, ...p2.hand])
+  );
+};
+
+/**
+ *
+ * @param p1: player 1 to comoare
+ * @param p2: player 2 to compare
+ * @returns player with the better hand
+ *
+ * https://www.contrib.andrew.cmu.edu/~gc00/reviews/pokerrules
+ */
+const comparePlayers = (p1: Card[], p2: Card[]) => {
+  const p1Hand = getHandTypeFromArray(p1);
+  const p2Hand = getHandTypeFromArray(p2);
+  const p1Rank = getHandTypeRank(p1Hand);
+  const p2Rank = getHandTypeRank(p2Hand);
+
+  if (p1Rank < p2Rank) {
+    return 1;
+  } else if (p1Rank > p2Rank) {
+    return -1;
+  }
+  return 0;
+};
+
+const getCardNumberArr = (card: Card[]): number[] => {
+  const arr: number[] = [];
+  for (let i = 0; i < card.length; i++) {
+    arr.push(getCardNumber(card[i]));
+  }
+  return arr;
+};
+
 const getCardNumber = (card: Card | string): number => {
   const pattern = /(\d{1,})/;
   const re = new RegExp(pattern);
@@ -176,10 +253,43 @@ const getCardCounts = (cardArr: number[]): number[] => {
 const compareCards = (a: string | Card, b: string | Card) => {
   if (getCardNumber(a) < getCardNumber(b)) {
     return -1;
-  } else if (getCardNumber(a) < getCardNumber(b)) {
+  } else if (getCardNumber(a) > getCardNumber(b)) {
     return 1;
   }
   return 0;
 };
 
-export { getHandType };
+class GameManger {
+  game: Game = {
+    deck: [],
+    flop: [],
+    players: [],
+    gameID: "",
+    pot: 0,
+    playerQueue: [],
+    gameState: GameState.PRE_GAME,
+  };
+  initalHandAmt = 100;
+  enableTieBreaker = false;
+  minBuyIn = 10;
+
+  constructor(config?: GameConfigType) {
+    if (config) {
+      if (config.enableTieBreaker)
+        this.enableTieBreaker = config.enableTieBreaker;
+      if (config.intialHandAmt) this.initalHandAmt = config.intialHandAmt;
+      if (config.minBuyIn) this.initalHandAmt = config.minBuyIn;
+    }
+    this.game.deck = Object.values(Card);
+  }
+
+  setupGame() {}
+
+  enqueuePlayers() {}
+
+  shuffleDeck() {}
+
+  getRoundWinner() {}
+}
+
+export { getHandType, sortPlayers, GameManger };

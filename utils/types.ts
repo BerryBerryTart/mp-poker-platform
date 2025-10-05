@@ -1,4 +1,4 @@
-import { Card } from "./enums";
+import { Card, GameState } from "./enums";
 
 interface Game {
   gameID: string;
@@ -6,14 +6,21 @@ interface Game {
   pot: number;
   players: Player[];
   flop: Card[];
-  turn: Card | undefined;
-  river: Card | undefined;
+  playerQueue: Player[];
+  gameState: GameState;
 }
 
 interface Player {
   userID: string;
   hand: Card[];
   chips: number;
+  key: number;
 }
 
-export { Game, Player };
+interface GameConfigType {
+  intialHandAmt?: number;
+  enableTieBreaker?: boolean;
+  minBuyIn?: number;
+}
+
+export { Game, Player, GameConfigType };

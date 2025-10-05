@@ -77,6 +77,27 @@ enum HandType {
   HIGH_CARD = "HIGH_CARD",
 }
 
-enum ServerEvent {}
+enum SocketEvent {
+  CONNECTION = "connection",
+  PLAYER_JOIN = "PLAYER_JOIN",
+}
 
-export { Card, HandType, ServerEvent };
+enum GameState {
+  PRE_GAME = "PRE_GAME",
+  GAME_START = "GAME_START",
+  ANTE = "ANTE",
+  PLAYERS_BETTING = "PLAYERS_BETTING",
+  FLOP = "FLOP",
+  TURN = "TURN",
+  RIVER = "RIVER",
+  ROUND_END = "ROUND_END",
+  GAME_END = "GAME_END",
+}
+
+enum PlayerAction {
+  FOLD = "FOLD",
+  CHECK = "CHECK",
+  RAISE = "RAISE",
+}
+
+export { Card, HandType, SocketEvent, GameState, PlayerAction };
