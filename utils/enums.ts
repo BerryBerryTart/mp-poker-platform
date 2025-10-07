@@ -78,8 +78,9 @@ enum HandType {
 }
 
 enum SocketEvent {
-  CONNECTION = "connection",
-  PLAYER_JOIN = "PLAYER_JOIN",
+  NEW_CONNECTION = "connection",
+  CLIENT_CONNECT = "connect",
+  SEND_GAME_STATE = "send_game_state",
 }
 
 enum GameState {
@@ -105,4 +106,17 @@ enum Theme {
   LIGHT = "LIGHT",
 }
 
-export { Card, HandType, SocketEvent, GameState, PlayerAction, Theme };
+enum PlayerType {
+  HUMAN = "HUMAN",
+  ROBOT = "ROBOT",
+}
+
+export {
+  Card,
+  HandType,
+  SocketEvent,
+  GameState,
+  PlayerAction,
+  Theme,
+  PlayerType,
+};

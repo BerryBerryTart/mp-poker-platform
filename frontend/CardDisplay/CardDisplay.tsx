@@ -6,15 +6,21 @@ import Club from "../Assets/Club.svg";
 import Spade from "../Assets/Spade.svg";
 import Heart from "../Assets/Heart.svg";
 import Diamond from "../Assets/Diamond.svg";
+import Unknown from "../Assets/Unknown.svg";
 
 export interface CardProps {
-  card: Card;
+  card?: Card;
 }
 
 export const CardDisplay = (props: CardProps) => {
   const { card } = props;
 
-  const getCardComp = (card: Card) => {
+  const getCardComp = (card: Card | undefined) => {
+    // unturned card
+    if (!card) {
+      return <img className="suit-icon" src={Unknown} />;
+    }
+
     const suitChar = card.toString()[0];
     const cardNum = getCardNumber(card);
     let cardStr = "";
@@ -59,5 +65,9 @@ export const CardDisplay = (props: CardProps) => {
     );
   };
 
-  return <div className="card-container">{getCardComp(card)}</div>;
+  return (
+    <div className={card ? "card-container" : "card-container card-back"}>
+      {getCardComp(card)}
+    </div>
+  );
 };

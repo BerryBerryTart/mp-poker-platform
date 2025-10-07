@@ -1,6 +1,6 @@
 import { createContext, useState, type PropsWithChildren } from "react";
 import { Theme } from "../../utils/enums";
-import { ConfigProvider, theme as antdTheme } from "antd";
+import { ConfigProvider, theme as antdTheme } from "../antdES";
 
 interface ThemeContextType {
   state: {
@@ -12,12 +12,12 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  state: { theme: Theme.LIGHT },
+  state: { theme: Theme.DARK },
   actions: { setTheme: () => {} },
 });
 
 const ThemeProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>(Theme.LIGHT);
+  const [theme, setTheme] = useState<Theme>(Theme.DARK);
 
   const value: ThemeContextType = {
     state: { theme },

@@ -1,16 +1,15 @@
 import { Card, GameState } from "./enums";
 
-interface Game {
-  gameID: string;
-  deck: Card[];
+interface SerialisedGame {
   pot: number;
   players: Player[];
   flop: Card[];
-  playerQueue: Player[];
+  playerQueue: string[];
   gameState: GameState;
 }
 
 interface Player {
+  userName: string;
   userID: string;
   hand: Card[];
   chips: number;
@@ -23,4 +22,9 @@ interface GameConfigType {
   minBuyIn?: number;
 }
 
-export { Game, Player, GameConfigType };
+interface AuthType {
+  userName?: string;
+  userID: string;
+}
+
+export { Player, GameConfigType, AuthType, SerialisedGame };

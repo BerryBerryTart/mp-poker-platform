@@ -5,6 +5,7 @@ import "./ThemeToggle.less";
 import Dark from "../Assets/Dark.svg";
 import Light from "../Assets/Light.svg";
 import { Theme } from "../../utils/enums";
+import { FloatButton } from "../antdES";
 
 export const ThemeToggle = () => {
   const theme = useContext(ThemeContext);
@@ -21,17 +22,18 @@ export const ThemeToggle = () => {
   };
 
   const getThemeIcon = () => {
-    if (theme.state.theme === Theme.DARK) {
-      return (
-        <div className="theme-button" id="light-button">
-          <img src={Light} onClick={toggleTheme} />
-        </div>
-      );
-    }
+    const t = theme.state.theme;
     return (
-      <div className="theme-button" id="dark-button">
-        <img src={Dark} onClick={toggleTheme} />
-      </div>
+      <FloatButton
+        type={t === Theme.DARK ? "default" : "primary"}
+        onClick={toggleTheme}
+        icon={
+          <img
+            className="toggle-theme-btn"
+            src={t === Theme.DARK ? Light : Dark}
+          />
+        }
+      />
     );
   };
 

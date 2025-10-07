@@ -1,5 +1,5 @@
 import { Card, GameState, HandType } from "./enums";
-import { Player, Game, GameConfigType } from "./types";
+import { Player, GameConfigType, SerialisedGame } from "./types";
 
 const gameActionFlow = [
   GameState.PRE_GAME,
@@ -14,11 +14,11 @@ const gameActionFlow = [
   GameState.GAME_END,
 ];
 
-const getHandType = (player: Player, game: Game): HandType => {
+const getHandType = (player: Player, flop: Card[]): HandType => {
   // aggregate cards into an array for analysis
   const handArr: Card[] = [];
   handArr.push(...player.hand);
-  handArr.push(...game.flop);
+  handArr.push(...flop);
   return getHandTypeFromArray(handArr);
 };
 
@@ -188,10 +188,10 @@ const getHandTypeRank = (handType: HandType): number => {
 };
 
 //sort players from best hand to worst hand
-const sortPlayers = (game: Game) => {
+const sortPlayers = (players: Player[], flop: Card[]) => {
   // aggregate cards into an array for analysis
-  const baseHand: Card[] = [...game.flop];
-  game.players.sort((p1, p2) =>
+  const baseHand: Card[] = [...flop];
+  players.sort((p1, p2) =>
     comparePlayers([...baseHand, ...p1.hand], [...baseHand, ...p2.hand])
   );
 };
@@ -259,19 +259,16 @@ const compareCards = (a: string | Card, b: string | Card) => {
   return 0;
 };
 
-class GameManger {
-  game: Game = {
-    deck: [],
-    flop: [],
-    players: [],
-    gameID: "",
-    pot: 0,
-    playerQueue: [],
-    gameState: GameState.PRE_GAME,
-  };
-  initalHandAmt = 100;
-  enableTieBreaker = false;
-  minBuyIn = 10;
+class GameManager {
+  deck: Card[] = [];
+  flop: Card[] = [];
+  players: Player[] = [];
+  pot: number = 0;
+  playerQueue: string[] = [];
+  gameState: GameState = GameState.PRE_GAME;
+  initalHandAmt: number = 100;
+  enableTieBreaker: boolean = false;
+  minBuyIn: number = 10;
 
   constructor(config?: GameConfigType) {
     if (config) {
@@ -280,7 +277,44 @@ class GameManger {
       if (config.intialHandAmt) this.initalHandAmt = config.intialHandAmt;
       if (config.minBuyIn) this.initalHandAmt = config.minBuyIn;
     }
-    this.game.deck = Object.values(Card);
+    this.deck = Object.values(Card);
+  }
+
+  addPlayer(userName: string, userID: string) {
+    const player: Player = {
+      userName,
+      userID,
+      chips: this.initalHandAmt,
+      hand: [],
+      key: -1,
+    };
+    this.players.push(player);
+  }
+
+  removePlayer(userID: string) {
+    const pIndex = this.players.findIndex((p) => p.userID === userID);
+    if (pIndex > -1) {
+      this.players.splice(pIndex, 1);
+    }
+  }
+
+  serialiseGame(userID: string): SerialisedGame {
+    const playersClone = structuredClone(this.players);
+
+    //hide other player's hands on serialisation
+    for (let i = 0; i < playersClone.length; i++) {
+      if (playersClone[i].userID !== userID) {
+        playersClone[i].hand = [];
+      }
+    }
+
+    return {
+      flop: this.flop,
+      gameState: this.gameState,
+      pot: this.pot,
+      players: playersClone,
+      playerQueue: this.playerQueue,
+    };
   }
 
   setupGame() {}
@@ -292,4 +326,4 @@ class GameManger {
   getRoundWinner() {}
 }
 
-export { getHandType, sortPlayers, GameManger, getCardNumber };
+export { getHandType, sortPlayers, GameManager, getCardNumber };
