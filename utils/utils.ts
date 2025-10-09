@@ -259,6 +259,24 @@ const compareCards = (a: string | Card, b: string | Card) => {
   return 0;
 };
 
+// https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+function shuffle(array: any[]) {
+  let currentIndex = array.length;
+
+  // While there remain elements to shuffle...
+  while (currentIndex != 0) {
+    // Pick a remaining element...
+    let randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex],
+      array[currentIndex],
+    ];
+  }
+}
+
 class GameManager {
   deck: Card[] = [];
   flop: Card[] = [];
@@ -270,21 +288,12 @@ class GameManager {
   enableTieBreaker: boolean = false;
   minBuyIn: number = 10;
 
-  constructor(config?: GameConfigType) {
-    if (config) {
-      if (config.enableTieBreaker)
-        this.enableTieBreaker = config.enableTieBreaker;
-      if (config.intialHandAmt) this.initalHandAmt = config.intialHandAmt;
-      if (config.minBuyIn) this.initalHandAmt = config.minBuyIn;
-    }
-    this.deck = Object.values(Card);
-  }
-
   addPlayer(userName: string, userID: string) {
     const player: Player = {
       userName,
       userID,
       chips: this.initalHandAmt,
+      wager: 0,
       hand: [],
       key: -1,
     };
@@ -298,13 +307,15 @@ class GameManager {
     }
   }
 
-  serialiseGame(userID: string): SerialisedGame {
+  serialiseGame(userID: string, adminView?: boolean): SerialisedGame {
     const playersClone = structuredClone(this.players);
 
     //hide other player's hands on serialisation
-    for (let i = 0; i < playersClone.length; i++) {
-      if (playersClone[i].userID !== userID) {
-        playersClone[i].hand = [];
+    if (!adminView) {
+      for (let i = 0; i < playersClone.length; i++) {
+        if (playersClone[i].userID !== userID) {
+          playersClone[i].hand = [];
+        }
       }
     }
 
@@ -317,13 +328,80 @@ class GameManager {
     };
   }
 
-  setupGame() {}
+  serialiseGameDetails(): GameConfigType {
+    return {
+      enableTieBreaker: this.enableTieBreaker,
+      intialHandAmt: this.initalHandAmt,
+      minBuyIn: this.minBuyIn,
+    } as GameConfigType;
+  }
+
+  updateGameDetails(config: GameConfigType) {
+    if (config.enableTieBreaker)
+      this.enableTieBreaker = config.enableTieBreaker;
+    if (config.intialHandAmt) this.initalHandAmt = config.intialHandAmt;
+    if (config.minBuyIn) this.initalHandAmt = config.minBuyIn;
+  }
+
+  setupGame() {
+    this.deck = Object.values(Card);
+    shuffle(this.deck);
+    for (let i = 0; i < this.players.length; i++) {
+      let p = this.players[i];
+      const c1 = this.deck.shift() as Card;
+      const c2 = this.deck.shift() as Card;
+      p.hand = [c1, c2];
+    }
+  }
+
+  placeBet(userID: string, bet: number) {
+    const u = this.players.find((el) => el.userID === userID);
+    if (!u) {
+      throw new Error("ERROR: Player not found");
+    }
+    //TODO: check if it's actually the player's turn
+    u.chips -= bet;
+    u.wager += bet;
+    this.pot += bet;
+  }
+
+  reset() {
+    this.deck = Object.values(Card);
+    this.pot = 0;
+    this.gameState = GameState.PRE_GAME;
+    this.initalHandAmt = 100;
+    this.enableTieBreaker = false;
+    this.minBuyIn = 10;
+    for (let i = 0; i < this.players.length; i++) {
+      let p = this.players[i];
+      p.hand = [];
+      p.wager = 0;
+      p.chips = this.initalHandAmt;
+      p.key = 1;
+    }
+  }
 
   enqueuePlayers() {}
 
-  shuffleDeck() {}
-
   getRoundWinner() {}
+
+  // https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+  shuffle(array: any[]) {
+    let currentIndex = array.length;
+
+    // While there remain elements to shuffle...
+    while (currentIndex != 0) {
+      // Pick a remaining element...
+      let randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+
+      // And swap it with the current element.
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex],
+        array[currentIndex],
+      ];
+    }
+  }
 }
 
 export { getHandType, sortPlayers, GameManager, getCardNumber };

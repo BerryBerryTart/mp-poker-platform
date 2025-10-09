@@ -13,6 +13,7 @@ interface Player {
   userID: string;
   hand: Card[];
   chips: number;
+  wager: number;
   key: number;
 }
 
@@ -27,4 +28,9 @@ interface AuthType {
   userID: string;
 }
 
-export { Player, GameConfigType, AuthType, SerialisedGame };
+interface PlaceBetType {
+  userID: string;
+  bet: number;
+}
+
+export { Player, GameConfigType, AuthType, SerialisedGame, PlaceBetType };

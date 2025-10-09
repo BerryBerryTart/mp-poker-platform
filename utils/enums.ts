@@ -80,7 +80,13 @@ enum HandType {
 enum SocketEvent {
   NEW_CONNECTION = "connection",
   CLIENT_CONNECT = "connect",
+  CLIENT_DISCONNECT = "connect",
   SEND_GAME_STATE = "send_game_state",
+  PLACE_BET = "place_bet",
+  ADMIN_SEND_GAME_STATE = "admin_send_game_state",
+  ADMIN_SEND_GAME_CONFIG = "admin_send_game_config",
+  ADMIN_START_GAME = "admin_start_game",
+  ADMIN_RESET_GAME = "admin_reset_game",
 }
 
 enum GameState {

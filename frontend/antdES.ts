@@ -8,6 +8,7 @@ import InputNumber from "antd/es/input-number";
 import Input from "antd/es/input";
 import Space from "antd/es/space";
 import FloatButton from "antd/es/float-button";
+import notification from "antd/es/notification";
 
 export {
   ConfigProvider,
@@ -19,5 +20,6 @@ export {
   InputNumber,
   Input,
   Space,
-  FloatButton
+  FloatButton,
+  notification
 };

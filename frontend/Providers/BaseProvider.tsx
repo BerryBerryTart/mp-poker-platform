@@ -1,11 +1,14 @@
 import { type PropsWithChildren } from "react";
 import { ThemeProvider } from "./ThemeProvider";
 import { GameProvider } from "./GameProvider";
+import { AdminProvider } from "./AdminProvider";
 
 export const BaseProvider: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <ThemeProvider>
-      <GameProvider>{children}</GameProvider>
+      <AdminProvider>
+        <GameProvider>{children}</GameProvider>
+      </AdminProvider>
     </ThemeProvider>
   );
 };

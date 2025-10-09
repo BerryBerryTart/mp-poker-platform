@@ -8,7 +8,7 @@ import {
   Space,
 } from "../antdES";
 import { CardDisplay } from "../CardDisplay/CardDisplay";
-import { ReactNode, useContext, useEffect, useRef, useState } from "react";
+import { ReactNode, useContext, useRef, useState } from "react";
 import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
 import { GameContext, GameContextType } from "../Providers/GameProvider";
 import { v6 } from "uuid";
@@ -23,11 +23,7 @@ export const GameBoard = () => {
 
   const gameContext = useContext(GameContext) as GameContextType;
   const { connected, gameState, self } = gameContext.state;
-  const { connect, disconnect } = gameContext.actions;
-
-  useEffect(() => {
-    console.log(gameState);
-  }, [gameState]);
+  const { connect, disconnect, placeBet } = gameContext.actions;
 
   const getPlayers = (): ReactNode[] => {
     const playerComponents: ReactNode[] = [];
@@ -55,12 +51,17 @@ export const GameBoard = () => {
             </Popover>
           )}
           {connected && p[i] && (
-            <Typography.Text style={{ cursor: "none" }}>
-              Chips: {p[i].chips}
-            </Typography.Text>
+            <>
+              <p className="card-content" style={{ cursor: "default" }}>
+                Chips: {p[i].chips}
+              </p>
+              <p className="card-content" style={{ cursor: "default" }}>
+                Wager: {p[i].wager}
+              </p>
+            </>
           )}
           {connected && !p[i] && (
-            <Typography.Text disabled style={{ cursor: "none" }}>
+            <Typography.Text disabled style={{ cursor: "default" }}>
               Click To Join
             </Typography.Text>
           )}
@@ -84,11 +85,18 @@ export const GameBoard = () => {
     );
   };
 
+  const handleRaise = () => {
+    placeBet(userID.current, raiseAmt);
+    setRaiseAmt(0);
+  };
+
   const raisePopupContent = () => {
     return (
       <Space.Compact>
-        <InputNumber onChange={handleRaiseAmtChange} />
-        <Button>SUBMIT</Button>
+        <InputNumber min={0} onChange={handleRaiseAmtChange} value={raiseAmt} />
+        <Button onClick={handleRaise} disabled={raiseAmt < 1}>
+          SUBMIT
+        </Button>
       </Space.Compact>
     );
   };
@@ -129,6 +137,8 @@ export const GameBoard = () => {
         <Typography>Player 2's Turn</Typography>
         <div id="community-cards">{renderCommunityCards()}</div>
         <Typography.Text italic>Community Cards</Typography.Text>
+        <br />
+        <Typography>Prize Pot: {gameState?.pot ?? 0}</Typography>
       </div>
 
       <div id="info-container">
@@ -157,12 +167,15 @@ export const GameBoard = () => {
                 trigger="click"
                 content={raisePopupContent}
               >
-                <Button>RAISE</Button>
+                <Button disabled={!connected}>RAISE</Button>
               </Popover>
-              <Button>CHECK</Button>
-              <Button>FOLD</Button>
+              <Button disabled={!connected}>CHECK</Button>
+              <Button disabled={!connected}>FOLD</Button>
             </div>
-            <Typography.Text>Your Chips: 0</Typography.Text>
+            <Space size="large">
+              <Typography.Text>Your Chips: {self?.chips ?? 0}</Typography.Text>
+              <Typography.Text>Your Wager: {self?.wager ?? 0}</Typography.Text>
+            </Space>
           </div>
           <div id="your-hand-container">
             <div id="your-hand">{renderHand()}</div>
