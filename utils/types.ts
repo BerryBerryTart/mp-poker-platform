@@ -1,4 +1,4 @@
-import { Card, GameState } from "./enums";
+import { Card, GameState, PlayerState } from "./enums";
 
 interface SerialisedGame {
   pot: number;
@@ -6,6 +6,8 @@ interface SerialisedGame {
   flop: Card[];
   playerQueue: string[];
   gameState: GameState;
+  winnerID?: string | undefined;
+  actions: GameActionType[];
 }
 
 interface Player {
@@ -15,6 +17,7 @@ interface Player {
   chips: number;
   wager: number;
   key: number;
+  state: PlayerState;
 }
 
 interface GameConfigType {
@@ -28,9 +31,25 @@ interface AuthType {
   userID: string;
 }
 
-interface PlaceBetType {
+interface PlayerActionType {
   userID: string;
+}
+
+interface PlaceBetType extends PlayerActionType {
   bet: number;
 }
 
-export { Player, GameConfigType, AuthType, SerialisedGame, PlaceBetType };
+interface GameActionType {
+  color?: string;
+  action: string;
+}
+
+export {
+  Player,
+  GameConfigType,
+  AuthType,
+  SerialisedGame,
+  PlaceBetType,
+  PlayerActionType,
+  GameActionType 
+};

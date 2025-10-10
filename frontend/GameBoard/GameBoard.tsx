@@ -6,24 +6,44 @@ import {
   Typography,
   Input,
   Space,
+  Timeline,
 } from "../antdES";
 import { CardDisplay } from "../CardDisplay/CardDisplay";
-import { ReactNode, useContext, useRef, useState } from "react";
+import { ReactNode, useContext, useRef, useState, useEffect } from "react";
 import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
 import { GameContext, GameContextType } from "../Providers/GameProvider";
 import { v6 } from "uuid";
 
 import "./GameBoard.less";
+import {
+  getHandType,
+  handTypeToString,
+  playerStateToString,
+} from "../../utils/utils";
+import { CommunityCards } from "../CommunityCards/CommunityCards";
+import { GameState, PlayerState } from "../../utils/enums";
 
 export const GameBoard = () => {
   const [raiseAmt, setRaiseAmt] = useState(0);
   const [userName, setUserName] = useState("");
+  const [yourTurn, setYourTurn] = useState(false);
 
   const userID = useRef<string>(v6());
 
   const gameContext = useContext(GameContext) as GameContextType;
   const { connected, gameState, self } = gameContext.state;
-  const { connect, disconnect, placeBet } = gameContext.actions;
+  const { connect, disconnect, placeBet, check, fold } = gameContext.actions;
+
+  useEffect(() => {
+    if (
+      gameState?.playerQueue[0] &&
+      gameState?.playerQueue[0] === userID.current
+    ) {
+      setYourTurn(true);
+    } else {
+      setYourTurn(false);
+    }
+  }, [gameState]);
 
   const getPlayers = (): ReactNode[] => {
     const playerComponents: ReactNode[] = [];
@@ -51,14 +71,17 @@ export const GameBoard = () => {
             </Popover>
           )}
           {connected && p[i] && (
-            <>
-              <p className="card-content" style={{ cursor: "default" }}>
+            <Space direction="vertical">
+              <Typography.Text style={{ cursor: "default" }}>
                 Chips: {p[i].chips}
-              </p>
-              <p className="card-content" style={{ cursor: "default" }}>
+              </Typography.Text>
+              <Typography.Text style={{ cursor: "default" }}>
                 Wager: {p[i].wager}
-              </p>
-            </>
+              </Typography.Text>
+              <Typography.Text style={{ cursor: "default" }}>
+                {playerStateToString(p[i].state)}
+              </Typography.Text>
+            </Space>
           )}
           {connected && !p[i] && (
             <Typography.Text disabled style={{ cursor: "default" }}>
@@ -85,20 +108,92 @@ export const GameBoard = () => {
     );
   };
 
-  const handleRaise = () => {
-    placeBet(userID.current, raiseAmt);
+  const handleRaise = (allIn = false) => {
+    if (allIn) {
+      placeBet(userID.current, self?.chips ?? 0);
+    } else {
+      placeBet(userID.current, raiseAmt);
+    }
     setRaiseAmt(0);
   };
 
   const raisePopupContent = () => {
     return (
-      <Space.Compact>
-        <InputNumber min={0} onChange={handleRaiseAmtChange} value={raiseAmt} />
-        <Button onClick={handleRaise} disabled={raiseAmt < 1}>
-          SUBMIT
-        </Button>
-      </Space.Compact>
+      <Space direction="vertical" align="center">
+        {!canRaise() && minRaiseAmt() - raiseAmt > 0 && (
+          <Typography.Text type="danger">
+            You must bet at least {minRaiseAmt() - raiseAmt} chips
+          </Typography.Text>
+        )}
+        <Space.Compact>
+          <InputNumber
+            min={0}
+            max={self?.chips ?? 0}
+            onChange={handleRaiseAmtChange}
+            value={raiseAmt}
+            width={"100%"}
+          />
+          <Button onClick={(_) => handleRaise()} disabled={!canRaise()}>
+            SUBMIT
+          </Button>
+        </Space.Compact>
+        <Space.Compact>
+          <Button
+            disabled={disableRaiseAmtBtn(-10)}
+            onClick={(_) => handleRaiseChipBtn(-10)}
+          >
+            -10
+          </Button>
+          <Button
+            disabled={disableRaiseAmtBtn(-5)}
+            onClick={(_) => handleRaiseChipBtn(-5)}
+          >
+            -5
+          </Button>
+          <Button onClick={(_) => handleRaise(true)}>GO ALL IN!</Button>
+          <Button
+            disabled={disableRaiseAmtBtn(5)}
+            onClick={(_) => handleRaiseChipBtn(5)}
+          >
+            +5
+          </Button>
+          <Button
+            disabled={disableRaiseAmtBtn(10)}
+            onClick={(_) => handleRaiseChipBtn(10)}
+          >
+            +10
+          </Button>
+        </Space.Compact>
+      </Space>
     );
+  };
+
+  const handleRaiseChipBtn = (amt: number) => {
+    if (!self?.chips) return;
+    setRaiseAmt(raiseAmt + amt);
+  };
+
+  const disableRaiseAmtBtn = (amt: number) => {
+    if (!self?.chips) return true;
+    if (raiseAmt + amt < 0 || raiseAmt + amt > self.chips) {
+      return true;
+    }
+    return false;
+  };
+
+  const minRaiseAmt = () => {
+    const wagerArr = gameState?.players.map((el) => el.wager) ?? [];
+    const maxWager = Math.max(...wagerArr);
+    const ownWager = self?.wager ?? 0;
+    return maxWager - ownWager;
+  };
+
+  const canRaise = () => {
+    if (raiseAmt === 0) return false;
+    if (raiseAmt >= minRaiseAmt()) {
+      return true;
+    }
+    return false;
   };
 
   const renderHand = (): ReactNode[] => {
@@ -114,17 +209,52 @@ export const GameBoard = () => {
     return components;
   };
 
-  const renderCommunityCards = (): ReactNode[] => {
-    const c = gameState?.flop ?? [];
-    const components: ReactNode[] = [];
+  const getHandTypeString = () => {
+    if (!self?.hand || !gameState?.flop) return "";
+    if ([...self.hand, ...gameState.flop].length === 0) return "";
+    const h = getHandType(self, gameState.flop);
+    return "(" + handTypeToString(h) + ")";
+  };
 
-    for (let i = 0; i < 5; i++) {
-      components.push(
-        <CardDisplay key={i.toString()} card={c[i] ? c[i] : undefined} />
-      );
+  const handleCheck = () => {
+    check(userID.current);
+  };
+
+  const canCheck = () => {
+    if (gameState?.gameState === GameState.GAME_END) return false;
+    if (!self) return false;
+    if (self.state === PlayerState.FOLDED) return false;
+    if (!yourTurn) return false;
+    //player is all in, serverside we skip them but we'll keep this here just in case
+    if (self.state === PlayerState.ALL_IN) {
+      return true;
+    }
+    const wagerArr = gameState?.players.map((el) => el.wager) ?? [];
+    if (self.wager >= Math.max(...wagerArr)) return true;
+    return false;
+  };
+
+  const canFold = () => {
+    if (gameState?.gameState === GameState.GAME_END) return false;
+    if (!self) return false;
+    if (!yourTurn) return false;
+    return true;
+  };
+
+  const handleFold = () => {
+    fold(userID.current);
+  };
+
+  const renderActions = (): ReactNode => {
+    const items: any[] = [];
+    const actions = gameState?.actions ?? [];
+    for (let i = actions.length - 1; i >= 0; i--) {
+      items.push({
+        children: <Typography.Text>{actions[i].action}</Typography.Text>,
+      });
     }
 
-    return components;
+    return <Timeline items={items} />;
   };
 
   return (
@@ -132,15 +262,51 @@ export const GameBoard = () => {
       <div id="players-container">
         <Space>{getPlayers()}</Space>
       </div>
-
-      <div id="community-hand-container">
-        <Typography>Player 2's Turn</Typography>
-        <div id="community-cards">{renderCommunityCards()}</div>
-        <Typography.Text italic>Community Cards</Typography.Text>
-        <br />
-        <Typography>Prize Pot: {gameState?.pot ?? 0}</Typography>
+      <CommunityCards gameState={gameState} userID={userID.current} />
+      <div id="action-container">
+        <div id="timeline-container">{renderActions()}</div>
+        <Typography.Text italic>Game Activity</Typography.Text>
       </div>
 
+      <div id="your-info">
+        <div id="your-actions">
+          <div id="buttons">
+            <Popover
+              title="Enter Raise Amount"
+              trigger="click"
+              content={raisePopupContent}
+            >
+              <Button
+                disabled={
+                  !connected ||
+                  !yourTurn ||
+                  gameState?.gameState === GameState.GAME_END
+                }
+              >
+                RAISE
+              </Button>
+            </Popover>
+            <Button disabled={!connected || !canCheck()} onClick={handleCheck}>
+              CHECK
+            </Button>
+            <Button disabled={!connected || !canFold()} onClick={handleFold}>
+              FOLD
+            </Button>
+          </div>
+          <Space size="large">
+            <Typography.Text>Your Chips: {self?.chips ?? 0}</Typography.Text>
+            <Typography.Text>
+              Your Current Wager: {self?.wager ?? 0}
+            </Typography.Text>
+          </Space>
+        </div>
+        <div id="your-hand-container">
+          <div id="your-hand">{renderHand()}</div>
+          <Typography.Text italic>
+            Your Hand {getHandTypeString()}
+          </Typography.Text>
+        </div>
+      </div>
       <div id="info-container">
         <div id="connection-stats">
           <Space>
@@ -158,29 +324,6 @@ export const GameBoard = () => {
               </Button>
             )}
           </Space>
-        </div>
-        <div id="your-info">
-          <div id="your-actions">
-            <div id="buttons">
-              <Popover
-                title="Enter Raise Amount"
-                trigger="click"
-                content={raisePopupContent}
-              >
-                <Button disabled={!connected}>RAISE</Button>
-              </Popover>
-              <Button disabled={!connected}>CHECK</Button>
-              <Button disabled={!connected}>FOLD</Button>
-            </div>
-            <Space size="large">
-              <Typography.Text>Your Chips: {self?.chips ?? 0}</Typography.Text>
-              <Typography.Text>Your Wager: {self?.wager ?? 0}</Typography.Text>
-            </Space>
-          </div>
-          <div id="your-hand-container">
-            <div id="your-hand">{renderHand()}</div>
-            <Typography.Text italic>Your Hand</Typography.Text>
-          </div>
         </div>
         <ThemeToggle />
       </div>

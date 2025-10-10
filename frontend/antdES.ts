@@ -9,6 +9,7 @@ import Input from "antd/es/input";
 import Space from "antd/es/space";
 import FloatButton from "antd/es/float-button";
 import notification from "antd/es/notification";
+import Timeline from "antd/es/timeline";
 
 export {
   ConfigProvider,
@@ -21,5 +22,6 @@ export {
   Input,
   Space,
   FloatButton,
-  notification
+  notification,
+  Timeline
 };

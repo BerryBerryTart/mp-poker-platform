@@ -10,10 +10,11 @@ import Unknown from "../Assets/Unknown.svg";
 
 export interface CardProps {
   card?: Card;
+  small?: boolean;
 }
 
 export const CardDisplay = (props: CardProps) => {
-  const { card } = props;
+  const { card, small } = props;
 
   const getCardComp = (card: Card | undefined) => {
     // unturned card
@@ -65,9 +66,12 @@ export const CardDisplay = (props: CardProps) => {
     );
   };
 
-  return (
-    <div className={card ? "card-container" : "card-container card-back"}>
-      {getCardComp(card)}
-    </div>
-  );
+  const getClassName = () => {
+    let base = !small ? "card-container" : "card-container card-container-small";
+    if (!card) base += " card-back";
+
+    return base;
+  };
+
+  return <div className={getClassName()}>{getCardComp(card)}</div>;
 };

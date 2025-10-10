@@ -83,28 +83,29 @@ enum SocketEvent {
   CLIENT_DISCONNECT = "connect",
   SEND_GAME_STATE = "send_game_state",
   PLACE_BET = "place_bet",
+  CHECK = "player_check",
+  FOLD = "player_fold",
   ADMIN_SEND_GAME_STATE = "admin_send_game_state",
   ADMIN_SEND_GAME_CONFIG = "admin_send_game_config",
   ADMIN_START_GAME = "admin_start_game",
   ADMIN_RESET_GAME = "admin_reset_game",
+  REFRESH_DATA = "refresh_data",
+  ERROR = "error_message",
 }
 
 enum GameState {
   PRE_GAME = "PRE_GAME",
-  GAME_START = "GAME_START",
-  ANTE = "ANTE",
   PLAYERS_BETTING = "PLAYERS_BETTING",
-  FLOP = "FLOP",
-  TURN = "TURN",
-  RIVER = "RIVER",
   ROUND_END = "ROUND_END",
   GAME_END = "GAME_END",
 }
 
-enum PlayerAction {
-  FOLD = "FOLD",
-  CHECK = "CHECK",
-  RAISE = "RAISE",
+enum PlayerState {
+  FOLDED = "FOLDED",
+  BETTING = "BETTING",
+  CHECKED = "CHECKED",
+  ALL_IN = "ALL_IN",
+  SPECTATING = "SPECTATING",
 }
 
 enum Theme {
@@ -122,7 +123,7 @@ export {
   HandType,
   SocketEvent,
   GameState,
-  PlayerAction,
+  PlayerState,
   Theme,
   PlayerType,
 };

@@ -21,6 +21,7 @@ export interface AdminContextType {
     adminConnect: () => void;
     startGame: () => void;
     resetGame: () => void;
+    refresh: () => void;
   };
 }
 
@@ -31,7 +32,7 @@ export const AdminProvider: React.FC<PropsWithChildren> = ({ children }) => {
     SerialisedGame | undefined
   >();
   const [gameConfig, setGameConfig] = useState<GameConfigType | undefined>();
-  const [api, _] = notification.useNotification();
+  const [api, contextHolder] = notification.useNotification();
   const [connected, setConnected] = useState(false);
   const sock = useRef<Socket<DefaultEventsMap, DefaultEventsMap> | null>(null);
 
@@ -55,6 +56,12 @@ export const AdminProvider: React.FC<PropsWithChildren> = ({ children }) => {
     });
     socket.on(SocketEvent.ADMIN_SEND_GAME_CONFIG, (payload: GameConfigType) => {
       setGameConfig(payload);
+    });
+    socket.on(SocketEvent.ERROR, (payload: string) => {
+      api.error({
+        description: payload,
+        message: "Error!",
+      });
     });
     sock.current = socket;
   };
@@ -81,9 +88,25 @@ export const AdminProvider: React.FC<PropsWithChildren> = ({ children }) => {
     sock.current.emit(SocketEvent.ADMIN_RESET_GAME);
   };
 
+  const refresh = () => {
+    if (!sock.current) {
+      api.error({
+        message: "Socket Error!",
+        description: "Failed to fetch data.",
+      });
+      return;
+    }
+    sock.current.emit(SocketEvent.REFRESH_DATA);
+  };
+
   const value = {
     state: { adminGameState, gameConfig, connected },
-    actions: { adminConnect, startGame, resetGame },
+    actions: { adminConnect, startGame, resetGame, refresh },
   } as AdminContextType;
-  return <AdminContext value={value}>{children}</AdminContext>;
+  return (
+    <AdminContext value={value}>
+      {contextHolder}
+      {children}
+    </AdminContext>
+  );
 };

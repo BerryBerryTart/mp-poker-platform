@@ -7,24 +7,25 @@
     .player-card {
       min-width: 150px;
       width: fit-content;
-      .card-content{
-        margin-top: 5px;
-        margin-bottom: 5px;
-      }
     }
   }
-  #community-hand-container {
+  #action-container {
+    margin-top: 15px;
+    margin-bottom: 15px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    #community-cards {
+    #timeline-container {
       display: flex;
-      flex-direction: row;
-      border: 1px grey solid;
-      padding: 5px;
-      .card-container {
-        margin: 5px;
+      width: 300px;
+      max-height: 200px;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      > * {
+        // I dont know why it cuts off the top but here's a bodge fix
+        margin-top: 10px;
       }
     }
   }
@@ -37,30 +38,30 @@
     align-items: end;
     margin-left: 10px;
     margin-right: 10px;
-    #your-info {
+  }
+  #your-info {
+    display: flex;
+    flex-direction: column;
+    #your-hand-container {
       display: flex;
       flex-direction: column;
-      #your-hand-container {
+      align-items: center;
+      #your-hand {
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        #your-hand {
-          display: flex;
-          flex-direction: row;
-          .card-container {
-            margin: 5px;
-          }
+        flex-direction: row;
+        .card-container {
+          margin: 5px;
         }
       }
-      #your-actions {
-        display: flex;
-        flex-direction: column;
-        justify-content: end;
-        align-items: center;
-        #buttons .ant-btn {
-          margin-left: 5px;
-          margin-right: 5px;
-        }
+    }
+    #your-actions {
+      display: flex;
+      flex-direction: column;
+      justify-content: end;
+      align-items: center;
+      #buttons .ant-btn {
+        margin-left: 5px;
+        margin-right: 5px;
       }
     }
   }

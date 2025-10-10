@@ -1,6 +1,6 @@
-import { Player, Game } from "../types";
+import { Player } from "../types";
 import { getHandType, sortPlayers } from "../utils";
-import { Card, GameState, HandType } from "../enums";
+import { Card, GameState, HandType, PlayerState } from "../enums";
 
 describe("Hand type logic", () => {
   const player: Player = {
@@ -8,6 +8,8 @@ describe("Hand type logic", () => {
     userName: "user",
     hand: [],
     chips: 0,
+    wager: 0,
+    state: PlayerState.BETTING,
     key: -1,
   };
 
@@ -122,7 +124,7 @@ describe("Hand type logic", () => {
       Card.DIAMOND_THREE,
       Card.CLUB_SIX,
     ];
-    expect(getHandType(player, flop)).toBe(HandType.STRAIGHT_FLUSH);
+    expect(getHandType(player, flop)).not.toBe(HandType.STRAIGHT_FLUSH);
   });
 
   test("Detects Straight", () => {
@@ -136,6 +138,16 @@ describe("Hand type logic", () => {
       Card.CLUB_SIX,
     ];
     expect(getHandType(player, flop)).toBe(HandType.STRAIGHT);
+
+    player.hand = [Card.DIAMOND_TWO, Card.HEART_NINE];
+    flop = [
+      Card.CLUB_TWO,
+      Card.CLUB_KING,
+      Card.DIAMOND_EIGHT,
+      Card.CLUB_TEN,
+      Card.DIAMOND_JACK,
+    ];
+    expect(getHandType(player, flop)).not.toBe(HandType.STRAIGHT);
   });
 });
 
@@ -151,6 +163,8 @@ describe("Player hand rank logic", () => {
     userName: "user",
     hand: [],
     chips: 0,
+    wager: 0,
+    state: PlayerState.BETTING,
     key: -1,
   };
 
@@ -159,6 +173,8 @@ describe("Player hand rank logic", () => {
     userName: "user",
     hand: [],
     chips: 0,
+    wager: 0,
+    state: PlayerState.BETTING,
     key: -1,
   };
 
@@ -167,6 +183,8 @@ describe("Player hand rank logic", () => {
     userName: "user",
     hand: [],
     chips: 0,
+    wager: 0,
+    state: PlayerState.BETTING,
     key: -1,
   };
 

@@ -2,7 +2,13 @@ import { createContext, useRef, useState, type PropsWithChildren } from "react";
 import { io, Socket } from "socket.io-client";
 import { DefaultEventsMap } from "socket.io";
 import { SocketEvent } from "../../utils/enums";
-import { PlaceBetType, Player, SerialisedGame } from "../../utils/types";
+import {
+  PlaceBetType,
+  Player,
+  PlayerActionType,
+  SerialisedGame,
+} from "../../utils/types";
+import { notification } from "../antdES";
 
 export interface GameContextType {
   state: {
@@ -14,6 +20,8 @@ export interface GameContextType {
     connect: (userName: string | undefined, userID: string) => void;
     disconnect: () => void;
     placeBet: (userID: string, bet: number) => void;
+    check: (userID: string) => void;
+    fold: (userID: string) => void;
   };
 }
 
@@ -22,6 +30,8 @@ export const GameContext = createContext({});
 export const GameProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [connected, setConnected] = useState(false);
   const [gameState, setGameState] = useState<SerialisedGame | undefined>();
+  const [api, contextHolder] = notification.useNotification();
+
   const [self, setSelf] = useState<Player | undefined>();
 
   const sock = useRef<Socket<DefaultEventsMap, DefaultEventsMap> | null>(null);
@@ -38,6 +48,12 @@ export const GameProvider: React.FC<PropsWithChildren> = ({ children }) => {
       const you = payload.players.find((el) => el.userID === userID);
       setSelf(you);
     });
+    socket.on(SocketEvent.ERROR, (payload: string) => {
+      api.error({
+        description: payload,
+        message: "Error!",
+      });
+    });
 
     setConnected(true);
     sock.current = socket;
@@ -47,6 +63,18 @@ export const GameProvider: React.FC<PropsWithChildren> = ({ children }) => {
     if (!sock.current) return;
     const payload: PlaceBetType = { userID, bet };
     sock.current.emit(SocketEvent.PLACE_BET, payload);
+  };
+
+  const check = (userID: string) => {
+    if (!sock.current) return;
+    const payload: PlayerActionType = { userID };
+    sock.current.emit(SocketEvent.CHECK, payload);
+  };
+
+  const fold = (userID: string) => {
+    if (!sock.current) return;
+    const payload: PlayerActionType = { userID };
+    sock.current.emit(SocketEvent.FOLD, payload);
   };
 
   const disconnect = () => {
@@ -59,7 +87,12 @@ export const GameProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   const value = {
     state: { connected, gameState, self },
-    actions: { connect, disconnect, placeBet },
+    actions: { connect, disconnect, placeBet, check, fold },
   } as GameContextType;
-  return <GameContext value={value}>{children}</GameContext>;
+  return (
+    <GameContext value={value}>
+      {contextHolder}
+      {children}
+    </GameContext>
+  );
 };

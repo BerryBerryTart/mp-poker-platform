@@ -1,8 +1,8 @@
 import express from "express";
 import { createServer } from "http";
-import { Server } from "socket.io";
+import { DefaultEventsMap, Server, Socket } from "socket.io";
 import cors from "cors";
-import { AuthType, PlaceBetType } from "../utils/types";
+import { AuthType, PlaceBetType, PlayerActionType } from "../utils/types";
 import { GameManager } from "../utils/utils";
 import { SocketEvent } from "../utils/enums";
 
@@ -18,19 +18,29 @@ app.use(cors());
 
 const game = new GameManager();
 
-function sendGameStateToAll() {
-  for (let [_, s] of io.of("/").sockets) {
-    s.emit(
-      SocketEvent.SEND_GAME_STATE,
-      game.serialiseGame(s.handshake.auth.userID)
-    );
+function sendGameStateToAll(adminOnly = false) {
+  if (!adminOnly) {
+    for (let [_, s] of io.of("/").sockets) {
+      s.emit(
+        SocketEvent.SEND_GAME_STATE,
+        game.serialiseGame(s.handshake.auth.userID)
+      );
+    }
   }
-}
-function sendGameStateToAdmin() {
   io.of("/admin").emit(
     SocketEvent.ADMIN_SEND_GAME_STATE,
     game.serialiseGame("", true)
   );
+}
+
+function sendError(
+  socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>,
+  error: unknown
+) {
+  if (typeof error === "string")
+    socket.emit(SocketEvent.ERROR, error.toString());
+  else if (error instanceof Error)
+    socket.emit(SocketEvent.ERROR, error.message);
 }
 
 io.on(SocketEvent.NEW_CONNECTION, (socket) => {
@@ -45,8 +55,33 @@ io.on(SocketEvent.NEW_CONNECTION, (socket) => {
   sendGameStateToAll();
 
   socket.on(SocketEvent.PLACE_BET, (payload: PlaceBetType) => {
-    game.placeBet(payload.userID, payload.bet);
-    sendGameStateToAll();
+    try {
+      game.placeBet(payload.userID, payload.bet);
+      sendGameStateToAll();
+    } catch (error) {
+      console.log(error);
+      sendError(socket, error);
+    }
+  });
+
+  socket.on(SocketEvent.CHECK, (payload: PlayerActionType) => {
+    try {
+      game.check(payload.userID);
+      sendGameStateToAll();
+    } catch (error) {
+      console.log(error);
+      sendError(socket, error);
+    }
+  });
+
+  socket.on(SocketEvent.FOLD, (payload: PlayerActionType) => {
+    try {
+      game.fold(payload.userID);
+      sendGameStateToAll();
+    } catch (error: unknown) {
+      console.log(error);
+      sendError(socket, error);
+    }
   });
 
   socket.on("disconnect", () => {
@@ -55,9 +90,6 @@ io.on(SocketEvent.NEW_CONNECTION, (socket) => {
 
     //notify rest of disconnect
     sendGameStateToAll();
-
-    //Send to Admin too
-    sendGameStateToAdmin();
   });
 });
 
@@ -74,7 +106,10 @@ io.of("/admin").on(SocketEvent.NEW_CONNECTION, (socket) => {
     console.log("RESET GAME");
     game.reset();
     sendGameStateToAll();
-    sendGameStateToAdmin();
+  });
+  socket.on(SocketEvent.REFRESH_DATA, () => {
+    console.log("REFRESH DATA REQUEST");
+    sendGameStateToAll(true);
   });
 });
 

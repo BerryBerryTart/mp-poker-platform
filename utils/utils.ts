@@ -1,18 +1,10 @@
-import { Card, GameState, HandType } from "./enums";
-import { Player, GameConfigType, SerialisedGame } from "./types";
-
-const gameActionFlow = [
-  GameState.PRE_GAME,
-  GameState.GAME_START,
-  GameState.ANTE,
-  GameState.FLOP,
-  GameState.PLAYERS_BETTING,
-  GameState.TURN,
-  GameState.PLAYERS_BETTING,
-  GameState.RIVER,
-  GameState.ROUND_END,
-  GameState.GAME_END,
-];
+import { Card, GameState, HandType, PlayerState } from "./enums";
+import {
+  Player,
+  GameConfigType,
+  SerialisedGame,
+  GameActionType,
+} from "./types";
 
 const getHandType = (player: Player, flop: Card[]): HandType => {
   // aggregate cards into an array for analysis
@@ -70,7 +62,12 @@ const getHandTypeFromArray = (handArr: Card[]): HandType => {
 
     //keep track of sequence hits
     let counter = 1;
-    let nextNum = getCardNumber(firstCard);
+    let nextNum = getCardNumber(firstCard) + 1;
+
+    if (!handArr.includes(`${firstSuit}${nextNum}` as Card)) {
+      continue;
+    }
+
     //check rest of array in sequence
     for (let j = i + 1; j < handArr.length; j++) {
       const nextCard = handArr[j];
@@ -125,13 +122,19 @@ const getHandTypeFromArray = (handArr: Card[]): HandType => {
 
     //keep track of sequence hits
     let counter = 1;
-    let nextNum = getCardNumber(firstCard);
+    let nextNum = getCardNumber(firstCard) + 1;
+
+    if (!reducedHand.includes(nextNum)) {
+      continue;
+    }
+
     //check rest of array in sequence
     for (let j = i + 1; j < handArr.length; j++) {
       if (reducedHand.includes(nextNum)) {
         counter++;
         nextNum++;
         if (counter === 5) {
+          console.log(reducedHand);
           return HandType.STRAIGHT;
         }
       } else {
@@ -277,6 +280,50 @@ function shuffle(array: any[]) {
   }
 }
 
+const handTypeToString = (handType: HandType): string => {
+  switch (handType) {
+    case HandType.HIGH_CARD:
+      return "High Card";
+    case HandType.ONE_PAIR:
+      return "One Pair";
+    case HandType.TWO_PAIR:
+      return "Two Pair";
+    case HandType.THREE_OF_A_KIND:
+      return "Three of a Kind";
+    case HandType.STRAIGHT:
+      return "Straight";
+    case HandType.FLUSH:
+      return "Flush";
+    case HandType.FULL_HOUSE:
+      return "Full House";
+    case HandType.FOUR_OF_A_KIND:
+      return "Four of a Kind";
+    case HandType.STRAIGHT_FLUSH:
+      return "Straight Flush";
+    case HandType.ROYAL_FLUSH:
+      return "Royal Flush";
+    default:
+      return "";
+  }
+};
+
+const playerStateToString = (state: PlayerState): string => {
+  switch (state) {
+    case PlayerState.BETTING:
+      return "Betting";
+    case PlayerState.CHECKED:
+      return "Check";
+    case PlayerState.FOLDED:
+      return "Folded";
+    case PlayerState.SPECTATING:
+      return "Spectating";
+    case PlayerState.ALL_IN:
+      return "All In";
+    default:
+      return "";
+  }
+};
+
 class GameManager {
   deck: Card[] = [];
   flop: Card[] = [];
@@ -287,6 +334,8 @@ class GameManager {
   initalHandAmt: number = 100;
   enableTieBreaker: boolean = false;
   minBuyIn: number = 10;
+  winnerID: string | undefined = undefined;
+  actions: GameActionType[] = [];
 
   addPlayer(userName: string, userID: string) {
     const player: Player = {
@@ -296,6 +345,7 @@ class GameManager {
       wager: 0,
       hand: [],
       key: -1,
+      state: PlayerState.SPECTATING,
     };
     this.players.push(player);
   }
@@ -303,6 +353,10 @@ class GameManager {
   removePlayer(userID: string) {
     const pIndex = this.players.findIndex((p) => p.userID === userID);
     if (pIndex > -1) {
+      this.players.splice(pIndex, 1);
+    }
+    const pQIndex = this.playerQueue.findIndex((p) => p === userID);
+    if (pQIndex > -1) {
       this.players.splice(pIndex, 1);
     }
   }
@@ -325,6 +379,8 @@ class GameManager {
       pot: this.pot,
       players: playersClone,
       playerQueue: this.playerQueue,
+      winnerID: this.winnerID,
+      actions: this.actions,
     };
   }
 
@@ -348,21 +404,155 @@ class GameManager {
     shuffle(this.deck);
     for (let i = 0; i < this.players.length; i++) {
       let p = this.players[i];
-      const c1 = this.deck.shift() as Card;
-      const c2 = this.deck.shift() as Card;
-      p.hand = [c1, c2];
+      p.hand = [...this.drawCards(2)];
+      p.state = PlayerState.BETTING;
+      p.chips -= this.minBuyIn;
+      p.wager += this.minBuyIn;
+      this.pot += this.minBuyIn;
     }
+    this.gameState = GameState.PLAYERS_BETTING;
+    this.actions.push({ action: "Game Started" });
+    this.enqueuePlayers();
   }
 
   placeBet(userID: string, bet: number) {
+    const p = this.playerValidation(userID);
+    if (!this.playerQueue[0]) return;
+    this.playerCanAct(userID);
+
+    if (p.chips < bet) {
+      throw new Error("Not enough chips to bet");
+    }
+
+    p.chips -= bet;
+    p.wager += bet;
+    this.pot += bet;
+
+    this.actions.push({ action: `${p.userName} wagers ${p.wager}` });
+
+    //mark player as all in if they bet all their chips
+    if (p.chips === 0) {
+      p.state = PlayerState.ALL_IN;
+      this.actions.push({ action: `${p.userName} gone all in!` });
+    }
+
+    this.enqueuePlayers();
+  }
+
+  //helper function to ensure a player exists
+  playerValidation(userID: string): Player {
     const u = this.players.find((el) => el.userID === userID);
     if (!u) {
-      throw new Error("ERROR: Player not found");
+      throw new Error("Player not found");
     }
-    //TODO: check if it's actually the player's turn
-    u.chips -= bet;
-    u.wager += bet;
-    this.pot += bet;
+    return u;
+  }
+
+  playerCanAct(userID: string) {
+    if (userID !== this.playerQueue[0]) {
+      throw new Error("Player tried to go out of order");
+    }
+  }
+
+  drawCards(num: number): Card[] {
+    const cards: Card[] = [];
+    if (this.deck.length === 0) return cards;
+    for (let i = 0; i < num; i++) {
+      cards.push(this.deck.shift() as Card);
+    }
+    return cards;
+  }
+
+  check(userID: string) {
+    const u = this.playerValidation(userID);
+    this.playerCanAct(userID);
+    u.state = PlayerState.CHECKED;
+    this.actions.push({ action: `${u.userName} checked` });
+
+    this.enqueuePlayers();
+  }
+
+  advanceGameState() {
+    /**
+     * - Check if we need to advance game state first
+     * ADVANCE GAME STATE IF
+     * - all players are checked
+     * - all players are ALL IN
+     * - everyone who can bet has
+     */
+
+    //if all players have checked, advance game state
+    for (let i = 0; i < this.players.length; i++) {
+      let p = this.players[i];
+      //players still betting so don't advance
+      if (p.state === PlayerState.BETTING) {
+        return;
+      }
+    }
+
+    /**
+     * if there are two or more players checked, the game can continue
+     * if it's one or none checked, everyone can no longer bet or raise the ante
+     * player left MUST have bet at least the table's wager for this to trigger
+     */
+    const gameArr = this.players.filter(
+      (el) => el.state === PlayerState.CHECKED
+    );
+    const wagerArr = this.players.map((el) => el.wager) ?? [];
+
+    if (gameArr.length <= 1) {
+      //player left MUST meet minimum wager
+      if (gameArr[0] && gameArr[0].wager < Math.max(...wagerArr)) {
+        return;
+      }
+      //else no one else can make a move so end game
+      this.flop.push(...this.drawCards(5 - this.flop.length));
+      this.gameState = GameState.GAME_END;
+      this.getRoundWinner();
+    }
+
+    // reset player state from checked to betting for the next card pull
+    for (let i = 0; i < this.players.length; i++) {
+      let p = this.players[i];
+      if (p.state === PlayerState.CHECKED) {
+        p.state = PlayerState.BETTING;
+      }
+    }
+
+    if (this.flop.length < 3) {
+      //inital flop
+      this.flop.push(...this.drawCards(3));
+    } else if (this.flop.length === 3) {
+      //turn
+      this.flop.push(...this.drawCards(1));
+    } else if (this.flop.length === 4) {
+      //river
+      this.flop.push(...this.drawCards(1));
+    } else if (this.flop.length === 5) {
+      //all community cards have been drawn, showdown and game end
+      this.gameState = GameState.GAME_END;
+      this.getRoundWinner();
+    }
+  }
+
+  fold(userID: string) {
+    // if all players but one fold, game is over
+    const u = this.playerValidation(userID);
+    this.playerCanAct(userID);
+
+    this.actions.push({ action: `${u.userName} folded` });
+
+    u.state = PlayerState.FOLDED;
+    const playerArr = this.players.filter(
+      (el) =>
+        el.state !== PlayerState.SPECTATING && el.state !== PlayerState.FOLDED
+    );
+    if (playerArr.length <= 1) {
+      this.gameState = GameState.GAME_END;
+      this.getRoundWinner();
+    } else {
+      this.enqueuePlayers();
+    }
   }
 
   reset() {
@@ -372,18 +562,63 @@ class GameManager {
     this.initalHandAmt = 100;
     this.enableTieBreaker = false;
     this.minBuyIn = 10;
+    this.playerQueue = [];
+    this.flop = [];
+    this.actions = [];
     for (let i = 0; i < this.players.length; i++) {
       let p = this.players[i];
       p.hand = [];
       p.wager = 0;
       p.chips = this.initalHandAmt;
       p.key = 1;
+      p.state = PlayerState.SPECTATING;
     }
   }
 
-  enqueuePlayers() {}
+  //queue of players turns
+  enqueuePlayers() {
+    //first go
+    if (this.playerQueue.length === 0) {
+      this.playerQueue = this.players.map((el) => el.userID);
+      return;
+    }
 
-  getRoundWinner() {}
+    //advance game state if needed
+    this.advanceGameState();
+
+    const LOOP_LIMIT = this.playerQueue.length;
+    let iteration = 0;
+    while (iteration < LOOP_LIMIT) {
+      //pop front player off and send them to the back of the queue
+      const playerBuffer = this.playerQueue.shift() as string;
+      this.playerQueue.push(playerBuffer);
+      // next player is betting so stop shifting
+      const u = this.playerValidation(this.playerQueue[0]);
+      if (u.state === PlayerState.BETTING || u.state === PlayerState.CHECKED) {
+        break;
+      }
+      iteration++;
+    }
+  }
+
+  getRoundWinner() {
+    const playerArr = this.players.filter(
+      (el) =>
+        el.state !== PlayerState.SPECTATING && el.state !== PlayerState.FOLDED
+    );
+    //TODO: still need to handle ties
+    sortPlayers(playerArr, this.flop);
+    this.winnerID = playerArr[0].userID;
+    playerArr[0].chips += this.pot;
+    for (let i = 0; i < this.players.length; i++) {
+      const p = this.players[i];
+      p.wager = 0;
+    }
+
+    this.actions.push({
+      action: `${playerArr[0].userName} won the round (${this.pot} chips)!`,
+    });
+  }
 
   // https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
   shuffle(array: any[]) {
@@ -404,4 +639,12 @@ class GameManager {
   }
 }
 
-export { getHandType, sortPlayers, GameManager, getCardNumber };
+export {
+  getHandType,
+  getHandTypeFromArray,
+  sortPlayers,
+  GameManager,
+  getCardNumber,
+  handTypeToString,
+  playerStateToString,
+};
