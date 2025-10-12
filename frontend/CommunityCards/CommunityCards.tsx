@@ -16,7 +16,11 @@ export const CommunityCards = (props: CommunityCardsProps) => {
 
   const getCurrentPlayerName = () => {
     // game over
-    if (gameState?.gameState === GameState.GAME_END && gameState.winnerID) {
+    if (
+      (gameState?.gameState === GameState.ROUND_END ||
+        gameState?.gameState === GameState.GAME_END) &&
+      gameState.winnerID
+    ) {
       const u = gameState.players.find(
         (el) => el.userID === gameState.winnerID
       );
@@ -49,7 +53,9 @@ export const CommunityCards = (props: CommunityCardsProps) => {
     <div id="community-hand-container">
       <Typography.Text>{getCurrentPlayerName()}</Typography.Text>
       <div id="community-cards">{renderCommunityCards()}</div>
-      <Typography.Text italic>Community Cards</Typography.Text>
+      <Typography.Text italic type="secondary">
+        Community Cards
+      </Typography.Text>
       <br />
       <Typography>Prize Pot: {gameState?.pot ?? 0}</Typography>
     </div>

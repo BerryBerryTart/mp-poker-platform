@@ -25,3 +25,4 @@ dist-ssr
 
 scratch.ts
 scratch.js
+bun-build*

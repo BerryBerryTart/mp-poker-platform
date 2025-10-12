@@ -75,12 +75,13 @@ enum HandType {
   TWO_PAIR = "TWO_PAIR",
   ONE_PAIR = "ONE_PAIR",
   HIGH_CARD = "HIGH_CARD",
+  NONE = "NONE",
 }
 
 enum SocketEvent {
   NEW_CONNECTION = "connection",
   CLIENT_CONNECT = "connect",
-  CLIENT_DISCONNECT = "connect",
+  CLIENT_DISCONNECT = "disconnect",
   SEND_GAME_STATE = "send_game_state",
   PLACE_BET = "place_bet",
   CHECK = "player_check",
@@ -89,6 +90,8 @@ enum SocketEvent {
   ADMIN_SEND_GAME_CONFIG = "admin_send_game_config",
   ADMIN_START_GAME = "admin_start_game",
   ADMIN_RESET_GAME = "admin_reset_game",
+  ADMIN_NEXT_ROUND = "admin_next_round",
+  ADMIN_DISCONNECT_USER = "admin_disconnect_user",
   REFRESH_DATA = "refresh_data",
   ERROR = "error_message",
 }
@@ -104,8 +107,8 @@ enum PlayerState {
   FOLDED = "FOLDED",
   BETTING = "BETTING",
   CHECKED = "CHECKED",
-  ALL_IN = "ALL_IN",
   SPECTATING = "SPECTATING",
+  OUT = "OUT",
 }
 
 enum Theme {
@@ -118,6 +121,14 @@ enum PlayerType {
   ROBOT = "ROBOT",
 }
 
+enum ActionColour {
+  DEFAULT = "#6050DC",
+  CHECK = "#FFBF00",
+  RAISE = "#80FF00",
+  FOLD = "#6CB4EE",
+  WINNER = "#FF0800",
+}
+
 export {
   Card,
   HandType,
@@ -126,4 +137,5 @@ export {
   PlayerState,
   Theme,
   PlayerType,
+  ActionColour,
 };

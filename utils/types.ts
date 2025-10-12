@@ -1,4 +1,4 @@
-import { Card, GameState, PlayerState } from "./enums";
+import { ActionColour, Card, GameState, PlayerState } from "./enums";
 
 interface SerialisedGame {
   pot: number;
@@ -16,7 +16,6 @@ interface Player {
   hand: Card[];
   chips: number;
   wager: number;
-  key: number;
   state: PlayerState;
 }
 
@@ -40,7 +39,7 @@ interface PlaceBetType extends PlayerActionType {
 }
 
 interface GameActionType {
-  color?: string;
+  color?: ActionColour;
   action: string;
 }
 

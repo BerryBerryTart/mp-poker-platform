@@ -18,13 +18,27 @@
   }
 }
 
-.card-back {
-  width: 60px;
-  background: radial-gradient(#66616b, #3b393d);
+.card-back-dark {
+  width: fit-content;
+  background: radial-gradient(
+    hsla(207, 41%, 27%, 1) 0%,
+    hsla(191, 28%, 23%, 1) 30%,
+    hsla(205, 46%, 10%, 1) 100%
+  );
+}
+
+.card-back-light {
+  width:fit-content;
+  background: radial-gradient(hsla(113, 96%, 81%, 1), hsla(188, 90%, 51%, 1));
+  .suit-icon {
+    filter: invert(1);
+  }
 }
 
 .card-container-small {
   height: 40px;
+  min-width: fit-content;
+  width: 40px;
   .suit-icon {
     width: 20px;
   }

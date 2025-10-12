@@ -10,7 +10,6 @@ describe("Hand type logic", () => {
     chips: 0,
     wager: 0,
     state: PlayerState.BETTING,
-    key: -1,
   };
 
   let flop: Card[] = [];
@@ -165,7 +164,6 @@ describe("Player hand rank logic", () => {
     chips: 0,
     wager: 0,
     state: PlayerState.BETTING,
-    key: -1,
   };
 
   const player2: Player = {
@@ -175,7 +173,6 @@ describe("Player hand rank logic", () => {
     chips: 0,
     wager: 0,
     state: PlayerState.BETTING,
-    key: -1,
   };
 
   const player3: Player = {
@@ -185,7 +182,6 @@ describe("Player hand rank logic", () => {
     chips: 0,
     wager: 0,
     state: PlayerState.BETTING,
-    key: -1,
   };
 
   //reset game and hand before each test

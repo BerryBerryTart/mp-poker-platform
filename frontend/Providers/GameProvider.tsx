@@ -1,4 +1,10 @@
-import { createContext, useRef, useState, type PropsWithChildren } from "react";
+import {
+  createContext,
+  useRef,
+  useState,
+  type PropsWithChildren,
+  useEffect,
+} from "react";
 import { io, Socket } from "socket.io-client";
 import { DefaultEventsMap } from "socket.io";
 import { SocketEvent } from "../../utils/enums";
@@ -50,8 +56,18 @@ export const GameProvider: React.FC<PropsWithChildren> = ({ children }) => {
     });
     socket.on(SocketEvent.ERROR, (payload: string) => {
       api.error({
-        description: payload,
         message: "Error!",
+        description: payload,
+      });
+    });
+    socket.on(SocketEvent.CLIENT_DISCONNECT, () => {
+      setConnected(false);
+      setGameState(undefined);
+      setSelf(undefined);
+      sock.current = null;
+      api.error({
+        message: "Error!",
+        description: "Force Disconnect By Server",
       });
     });
 

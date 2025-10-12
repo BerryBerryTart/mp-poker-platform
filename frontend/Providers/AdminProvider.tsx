@@ -22,6 +22,8 @@ export interface AdminContextType {
     startGame: () => void;
     resetGame: () => void;
     refresh: () => void;
+    nextRound: () => void;
+    disconnectUser: (userID: string) => void;
   };
 }
 
@@ -66,42 +68,48 @@ export const AdminProvider: React.FC<PropsWithChildren> = ({ children }) => {
     sock.current = socket;
   };
 
-  const startGame = () => {
+  const sockCheck = () => {
     if (!sock.current) {
       api.error({
         message: "Socket Error!",
-        description: "Failed to start game.",
+        description: "No Connection.",
       });
-      return;
+      return false;
     }
-    sock.current.emit(SocketEvent.ADMIN_START_GAME);
+    return true;
+  };
+
+  const startGame = () => {
+    if (sockCheck()) sock.current!.emit(SocketEvent.ADMIN_START_GAME);
   };
 
   const resetGame = () => {
-    if (!sock.current) {
-      api.error({
-        message: "Socket Error!",
-        description: "Failed to reset game.",
-      });
-      return;
-    }
-    sock.current.emit(SocketEvent.ADMIN_RESET_GAME);
+    if (sockCheck()) sock.current!.emit(SocketEvent.ADMIN_RESET_GAME);
   };
 
   const refresh = () => {
-    if (!sock.current) {
-      api.error({
-        message: "Socket Error!",
-        description: "Failed to fetch data.",
-      });
-      return;
-    }
-    sock.current.emit(SocketEvent.REFRESH_DATA);
+    if (sockCheck()) sock.current!.emit(SocketEvent.REFRESH_DATA);
+  };
+
+  const nextRound = () => {
+    if (sockCheck()) sock.current!.emit(SocketEvent.ADMIN_NEXT_ROUND);
+  };
+
+  const disconnectUser = (userID: string) => {
+    if (sockCheck())
+      sock.current!.emit(SocketEvent.ADMIN_DISCONNECT_USER, { userID });
   };
 
   const value = {
     state: { adminGameState, gameConfig, connected },
-    actions: { adminConnect, startGame, resetGame, refresh },
+    actions: {
+      adminConnect,
+      startGame,
+      resetGame,
+      refresh,
+      nextRound,
+      disconnectUser,
+    },
   } as AdminContextType;
   return (
     <AdminContext value={value}>

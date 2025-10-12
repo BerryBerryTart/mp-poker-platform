@@ -5,7 +5,11 @@ import { Player } from "../../utils/types";
 import { CardDisplay } from "../CardDisplay/CardDisplay";
 import { GameState } from "../../utils/enums";
 import { CommunityCards } from "../CommunityCards/CommunityCards";
-import { playerStateToString } from "../../utils/utils";
+import {
+  getHandType,
+  handTypeToString,
+  playerStateToString,
+} from "../../utils/utils";
 
 import "./Admin.less";
 import Close from "../Assets/Close.svg";
@@ -13,7 +17,14 @@ import Close from "../Assets/Close.svg";
 export const Admin = () => {
   const adminContext = useContext(AdminContext) as AdminContextType;
   const { adminGameState, gameConfig } = adminContext.state;
-  const { adminConnect, startGame, resetGame, refresh } = adminContext.actions;
+  const {
+    adminConnect,
+    startGame,
+    resetGame,
+    refresh,
+    nextRound,
+    disconnectUser,
+  } = adminContext.actions;
 
   useEffect(() => {
     adminConnect();
@@ -46,6 +57,10 @@ export const Admin = () => {
     return components;
   };
 
+  const fetchHandString = (p: Player): string => {
+    return handTypeToString(getHandType(p, adminGameState?.flop ?? []));
+  };
+
   const getPlayers = (): ReactNode[] => {
     const components: ReactNode[] = [];
     const p = adminGameState?.players ?? [];
@@ -57,20 +72,28 @@ export const Admin = () => {
           title={p[i].userName}
           size="small"
           key={i.toString()}
-          extra={getDisconnectComp("")}
+          extra={getDisconnectComp(p[i].userID)}
         >
           <Space direction="vertical">
             <Typography.Text style={{ cursor: "default" }}>
               Chips: {p[i].chips}
             </Typography.Text>
-            <Typography.Text style={{ cursor: "default" }}>
-              Wager: {p[i].wager}
-            </Typography.Text>
-            <Typography.Text style={{ cursor: "default" }}>
-              {playerStateToString(p[i].state)}
-            </Typography.Text>
+            {adminGameState?.gameState !== GameState.ROUND_END &&
+              adminGameState?.gameState !== GameState.GAME_END && (
+                <>
+                  <Typography.Text style={{ cursor: "default" }}>
+                    Wager: {p[i].wager}
+                  </Typography.Text>
+                  <Typography.Text style={{ cursor: "default" }}>
+                    {playerStateToString(p[i].state)}
+                  </Typography.Text>
+                </>
+              )}
           </Space>
           <span className="card-content mini-hand">{renderHand(p[i])}</span>
+          <Typography.Text italic type="secondary">
+            {fetchHandString(p[i])}
+          </Typography.Text>
         </Card>
       );
     }
@@ -93,8 +116,12 @@ export const Admin = () => {
 
   const getDisconnectComp = (userID: string): ReactNode => {
     return (
-      <Popover content={<Typography.Text type="danger">Disconnect User</Typography.Text>}>
-        <img src={Close} />
+      <Popover
+        content={
+          <Typography.Text type="danger">Disconnect User</Typography.Text>
+        }
+      >
+        <img src={Close} onClick={(_) => disconnectUser(userID)} />
       </Popover>
     );
   };
@@ -117,7 +144,10 @@ export const Admin = () => {
       </div>
       <Space>
         <Button
-          disabled={adminGameState?.gameState !== GameState.PRE_GAME}
+          disabled={
+            adminGameState?.gameState !== GameState.PRE_GAME ||
+            adminGameState?.players.length < 2
+          }
           onClick={handleStartGame}
         >
           START GAME
@@ -127,6 +157,12 @@ export const Admin = () => {
           onClick={reset}
         >
           RESET GAME
+        </Button>
+        <Button
+          disabled={adminGameState?.gameState !== GameState.ROUND_END}
+          onClick={nextRound}
+        >
+          NEXT ROUND
         </Button>
         <Button onClick={refresh}>REFRESH DATA</Button>
       </Space>

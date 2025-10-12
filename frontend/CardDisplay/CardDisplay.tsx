@@ -1,4 +1,4 @@
-import { Card } from "../../utils/enums";
+import { Card, Theme } from "../../utils/enums";
 import { getCardNumber } from "../../utils/utils";
 
 import "./CardDisplay.less";
@@ -7,6 +7,8 @@ import Spade from "../Assets/Spade.svg";
 import Heart from "../Assets/Heart.svg";
 import Diamond from "../Assets/Diamond.svg";
 import Unknown from "../Assets/Unknown.svg";
+import { ThemeContext } from "../Providers/ThemeProvider";
+import { useContext } from "react";
 
 export interface CardProps {
   card?: Card;
@@ -15,6 +17,9 @@ export interface CardProps {
 
 export const CardDisplay = (props: CardProps) => {
   const { card, small } = props;
+
+  const themeContext = useContext(ThemeContext);
+  const { theme } = themeContext.state;
 
   const getCardComp = (card: Card | undefined) => {
     // unturned card
@@ -67,8 +72,11 @@ export const CardDisplay = (props: CardProps) => {
   };
 
   const getClassName = () => {
-    let base = !small ? "card-container" : "card-container card-container-small";
-    if (!card) base += " card-back";
+    let base = !small
+      ? "card-container"
+      : "card-container card-container-small";
+    if (!card)
+      base += theme === Theme.DARK ? " card-back-dark" : " card-back-light";
 
     return base;
   };

@@ -1,6 +1,6 @@
 import express from "express";
 import { createServer } from "http";
-import { DefaultEventsMap, Server, Socket } from "socket.io";
+import { Server, Socket } from "socket.io";
 import cors from "cors";
 import { AuthType, PlaceBetType, PlayerActionType } from "../utils/types";
 import { GameManager } from "../utils/utils";
@@ -18,6 +18,10 @@ app.use(cors());
 
 const game = new GameManager();
 
+interface GameSocket extends Socket {
+  userID?: string;
+}
+
 function sendGameStateToAll(adminOnly = false) {
   if (!adminOnly) {
     for (let [_, s] of io.of("/").sockets) {
@@ -33,17 +37,25 @@ function sendGameStateToAll(adminOnly = false) {
   );
 }
 
-function sendError(
-  socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>,
-  error: unknown
-) {
+function getSocketID(userID: string): string {
+  for (let [id, s] of io.of("/").sockets) {
+    let sock = s as GameSocket;
+    if (sock.userID === userID) {
+      return id;
+    }
+  }
+  //this shouldn't ever really happen.
+  throw new Error("Socket ID not found");
+}
+
+function sendError(socket: GameSocket, error: unknown) {
   if (typeof error === "string")
     socket.emit(SocketEvent.ERROR, error.toString());
   else if (error instanceof Error)
     socket.emit(SocketEvent.ERROR, error.message);
 }
 
-io.on(SocketEvent.NEW_CONNECTION, (socket) => {
+io.on(SocketEvent.NEW_CONNECTION, (socket: GameSocket) => {
   const auth = socket.handshake.auth as AuthType;
 
   if (!auth.userName) {
@@ -51,6 +63,9 @@ io.on(SocketEvent.NEW_CONNECTION, (socket) => {
   }
   game.addPlayer(auth.userName, auth.userID);
   console.log(auth.userName + " joined");
+
+  //set socket IDs for easy identification later
+  socket.userID = auth.userID;
 
   sendGameStateToAll();
 
@@ -93,20 +108,49 @@ io.on(SocketEvent.NEW_CONNECTION, (socket) => {
   });
 });
 
-io.of("/admin").on(SocketEvent.NEW_CONNECTION, (socket) => {
+io.of("/admin").on(SocketEvent.NEW_CONNECTION, (socket: GameSocket) => {
   socket.emit(SocketEvent.ADMIN_SEND_GAME_STATE, game.serialiseGame("", true));
   socket.emit(SocketEvent.ADMIN_SEND_GAME_CONFIG, game.serialiseGameDetails());
   socket.on(SocketEvent.ADMIN_START_GAME, () => {
     //deal out cards and broadcast
     console.log("STARTING GAME");
-    game.setupGame();
-    sendGameStateToAll();
+    try {
+      game.setupGame();
+      sendGameStateToAll();
+    } catch (error: unknown) {
+      console.log(error);
+      sendError(socket, error);
+    }
+  });
+  socket.on(SocketEvent.ADMIN_NEXT_ROUND, () => {
+    try {
+      game.setupGame(true);
+      sendGameStateToAll();
+    } catch (error: unknown) {
+      console.log(error);
+      sendError(socket, error);
+    }
   });
   socket.on(SocketEvent.ADMIN_RESET_GAME, () => {
     console.log("RESET GAME");
     game.reset();
     sendGameStateToAll();
   });
+  socket.on(
+    SocketEvent.ADMIN_DISCONNECT_USER,
+    (payload: { userID: string }) => {
+      const { userID } = payload;
+      try {
+        const u = game.playerValidation(userID);
+        const id = getSocketID(userID);
+        io.of("/").in(id).disconnectSockets(true);
+        console.log(u.userName + " removed by Admin");
+      } catch (error: unknown) {
+        console.log(error);
+        sendError(socket, error);
+      }
+    }
+  );
   socket.on(SocketEvent.REFRESH_DATA, () => {
     console.log("REFRESH DATA REQUEST");
     sendGameStateToAll(true);

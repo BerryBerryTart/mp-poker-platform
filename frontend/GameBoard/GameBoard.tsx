@@ -21,7 +21,13 @@ import {
   playerStateToString,
 } from "../../utils/utils";
 import { CommunityCards } from "../CommunityCards/CommunityCards";
-import { GameState, PlayerState } from "../../utils/enums";
+import {
+  ActionColour,
+  GameState,
+  PlayerState,
+  Card as CardEnum,
+} from "../../utils/enums";
+import { Player } from "../../utils/types";
 
 export const GameBoard = () => {
   const [raiseAmt, setRaiseAmt] = useState(0);
@@ -35,6 +41,7 @@ export const GameBoard = () => {
   const { connect, disconnect, placeBet, check, fold } = gameContext.actions;
 
   useEffect(() => {
+    console.log(gameState);
     if (
       gameState?.playerQueue[0] &&
       gameState?.playerQueue[0] === userID.current
@@ -75,12 +82,28 @@ export const GameBoard = () => {
               <Typography.Text style={{ cursor: "default" }}>
                 Chips: {p[i].chips}
               </Typography.Text>
-              <Typography.Text style={{ cursor: "default" }}>
-                Wager: {p[i].wager}
-              </Typography.Text>
-              <Typography.Text style={{ cursor: "default" }}>
-                {playerStateToString(p[i].state)}
-              </Typography.Text>
+              {gameState?.gameState !== GameState.ROUND_END &&
+                gameState?.gameState !== GameState.GAME_END && (
+                  <>
+                    <Typography.Text style={{ cursor: "default" }}>
+                      Wager: {p[i].wager}
+                    </Typography.Text>
+                    <Typography.Text style={{ cursor: "default" }}>
+                      {playerStateToString(p[i].state)}
+                    </Typography.Text>
+                  </>
+                )}
+              {(gameState?.gameState === GameState.ROUND_END ||
+                gameState?.gameState === GameState.GAME_END) && (
+                <>
+                  <span className="card-content mini-hand">
+                    {renderHand(p[i])}
+                  </span>
+                  <Typography.Text italic type="secondary">
+                    {fetchHandString(p[i])}
+                  </Typography.Text>
+                </>
+              )}
             </Space>
           )}
           {connected && !p[i] && (
@@ -93,6 +116,10 @@ export const GameBoard = () => {
     }
 
     return playerComponents;
+  };
+
+  const fetchHandString = (p: Player): string => {
+    return handTypeToString(getHandType(p, gameState?.flop ?? []));
   };
 
   const handleRaiseAmtChange = (value: any) => {
@@ -189,6 +216,11 @@ export const GameBoard = () => {
   };
 
   const canRaise = () => {
+    if (
+      gameState?.gameState === GameState.GAME_END ||
+      gameState?.gameState === GameState.ROUND_END
+    )
+      return false;
     if (raiseAmt === 0) return false;
     if (raiseAmt >= minRaiseAmt()) {
       return true;
@@ -196,13 +228,22 @@ export const GameBoard = () => {
     return false;
   };
 
-  const renderHand = (): ReactNode[] => {
-    const h = self?.hand ?? [];
+  const renderHand = (p?: Player): ReactNode[] => {
+    let h: CardEnum[] = [];
+    if (p) {
+      h = p.hand;
+    } else if (self?.hand) {
+      h = self.hand;
+    }
     const components: ReactNode[] = [];
 
     for (let i = 0; i < 2; i++) {
       components.push(
-        <CardDisplay key={i.toString()} card={h[i] ? h[i] : undefined} />
+        <CardDisplay
+          key={i.toString()}
+          card={h[i] ? h[i] : undefined}
+          small={!!p}
+        />
       );
     }
 
@@ -213,7 +254,7 @@ export const GameBoard = () => {
     if (!self?.hand || !gameState?.flop) return "";
     if ([...self.hand, ...gameState.flop].length === 0) return "";
     const h = getHandType(self, gameState.flop);
-    return "(" + handTypeToString(h) + ")";
+    return handTypeToString(h);
   };
 
   const handleCheck = () => {
@@ -221,21 +262,25 @@ export const GameBoard = () => {
   };
 
   const canCheck = () => {
-    if (gameState?.gameState === GameState.GAME_END) return false;
+    if (
+      gameState?.gameState === GameState.GAME_END ||
+      gameState?.gameState === GameState.ROUND_END
+    )
+      return false;
     if (!self) return false;
     if (self.state === PlayerState.FOLDED) return false;
     if (!yourTurn) return false;
-    //player is all in, serverside we skip them but we'll keep this here just in case
-    if (self.state === PlayerState.ALL_IN) {
-      return true;
-    }
     const wagerArr = gameState?.players.map((el) => el.wager) ?? [];
     if (self.wager >= Math.max(...wagerArr)) return true;
     return false;
   };
 
   const canFold = () => {
-    if (gameState?.gameState === GameState.GAME_END) return false;
+    if (
+      gameState?.gameState === GameState.GAME_END ||
+      gameState?.gameState === GameState.ROUND_END
+    )
+      return false;
     if (!self) return false;
     if (!yourTurn) return false;
     return true;
@@ -246,15 +291,16 @@ export const GameBoard = () => {
   };
 
   const renderActions = (): ReactNode => {
-    const items: any[] = [];
+    const items: { children: ReactNode; color?: string }[] = [];
     const actions = gameState?.actions ?? [];
-    for (let i = actions.length - 1; i >= 0; i--) {
+    for (let i = 0; i < actions.length; i++) {
       items.push({
+        color: actions[i]?.color?.toString() ?? ActionColour.DEFAULT,
         children: <Typography.Text>{actions[i].action}</Typography.Text>,
       });
     }
 
-    return <Timeline items={items} />;
+    return <Timeline reverse items={items} />;
   };
 
   return (
@@ -265,7 +311,9 @@ export const GameBoard = () => {
       <CommunityCards gameState={gameState} userID={userID.current} />
       <div id="action-container">
         <div id="timeline-container">{renderActions()}</div>
-        <Typography.Text italic>Game Activity</Typography.Text>
+        <Typography.Text italic type="secondary">
+          Game Activity
+        </Typography.Text>
       </div>
 
       <div id="your-info">
@@ -280,7 +328,8 @@ export const GameBoard = () => {
                 disabled={
                   !connected ||
                   !yourTurn ||
-                  gameState?.gameState === GameState.GAME_END
+                  gameState?.gameState === GameState.GAME_END ||
+                  gameState?.gameState === GameState.ROUND_END
                 }
               >
                 RAISE
@@ -302,8 +351,9 @@ export const GameBoard = () => {
         </div>
         <div id="your-hand-container">
           <div id="your-hand">{renderHand()}</div>
-          <Typography.Text italic>
-            Your Hand {getHandTypeString()}
+          <Typography.Text italic type="secondary">
+            Your Hand{" "}
+            {getHandTypeString() ? "(" + getHandTypeString() + ")" : ""}
           </Typography.Text>
         </div>
       </div>
