@@ -7,6 +7,7 @@ import {
   Input,
   Space,
   Timeline,
+  FloatButton,
 } from "../antdES";
 import { CardDisplay } from "../CardDisplay/CardDisplay";
 import { ReactNode, useContext, useRef, useState, useEffect } from "react";
@@ -26,8 +27,13 @@ import {
   GameState,
   PlayerState,
   Card as CardEnum,
+  Theme,
 } from "../../utils/enums";
 import { Player } from "../../utils/types";
+
+import Info from "../Assets/Info.svg";
+import { ThemeContext } from "../Providers/ThemeProvider";
+import { GameInfo } from "../GameInfo/GameInfo";
 
 export const GameBoard = () => {
   const [raiseAmt, setRaiseAmt] = useState(0);
@@ -35,6 +41,9 @@ export const GameBoard = () => {
   const [yourTurn, setYourTurn] = useState(false);
 
   const userID = useRef<string>(v6());
+
+  const themeContext = useContext(ThemeContext);
+  const { theme } = themeContext.state;
 
   const gameContext = useContext(GameContext) as GameContextType;
   const { connected, gameState, self } = gameContext.state;
@@ -212,7 +221,7 @@ export const GameBoard = () => {
     const wagerArr = gameState?.players.map((el) => el.wager) ?? [];
     const maxWager = Math.max(...wagerArr);
     const ownWager = self?.wager ?? 0;
-    return maxWager - ownWager;
+    return Math.min(self?.chips ?? Infinity, maxWager - ownWager);
   };
 
   const canRaise = () => {
@@ -375,7 +384,28 @@ export const GameBoard = () => {
             )}
           </Space>
         </div>
-        <ThemeToggle />
+        <div>
+          <FloatButton.Group>
+            <FloatButton
+              icon={
+                <img src={Info} style={{ transform: "translateX(-3px)" }} />
+              }
+              type={theme === Theme.DARK ? "default" : "primary"}
+              tooltip={{
+                overlay: (
+                  <>
+                    <Typography.Title level={4} style={{marginTop: "0px"}}>
+                      Game Configuration
+                    </Typography.Title>
+                    <GameInfo context={GameContext} />
+                  </>
+                ),
+                color: theme === Theme.DARK ? "#262626" : "#f1f1f1ff",
+              }}
+            />
+            <ThemeToggle />
+          </FloatButton.Group>
+        </div>
       </div>
     </div>
   );

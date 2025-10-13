@@ -7,10 +7,10 @@ import { Admin } from "./Admin/Admin";
 function App() {
   return (
     <BaseProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/poker">
         <Routes>
           <Route path="/" element={<GameBoard />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="admin" element={<Admin />} />
         </Routes>
       </BrowserRouter>
     </BaseProvider>

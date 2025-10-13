@@ -13,10 +13,12 @@ import {
 
 import "./Admin.less";
 import Close from "../Assets/Close.svg";
+import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
+import { GameInfo } from "../GameInfo/GameInfo";
 
 export const Admin = () => {
   const adminContext = useContext(AdminContext) as AdminContextType;
-  const { adminGameState, gameConfig } = adminContext.state;
+  const { adminGameState } = adminContext.state;
   const {
     adminConnect,
     startGame,
@@ -131,41 +133,44 @@ export const Admin = () => {
       <div id="players-container">
         <Space>{getPlayers()}</Space>
       </div>
-      <CommunityCards gameState={adminGameState} />
-      <div id="info">
-        <Typography>
-          Tie Breaker Enabled: {gameConfig?.enableTieBreaker?.toString() ?? "?"}
-        </Typography>
-        <Typography>
-          Initial Hand Amount: {gameConfig?.intialHandAmt ?? "?"}
-        </Typography>
-        <Typography>Minimum Buy In: {gameConfig?.minBuyIn ?? "?"}</Typography>
-        <Button>CONFIG GAME</Button>
+      <div id="game-container">
+        <CommunityCards gameState={adminGameState} />
+        <Space>
+          <Button
+            disabled={
+              adminGameState?.gameState !== GameState.PRE_GAME ||
+              adminGameState?.players.length < 2
+            }
+            onClick={handleStartGame}
+          >
+            START GAME
+          </Button>
+          <Button
+            disabled={adminGameState?.gameState === GameState.PRE_GAME}
+            onClick={reset}
+          >
+            RESET GAME
+          </Button>
+          <Button
+            disabled={adminGameState?.gameState !== GameState.ROUND_END}
+            onClick={nextRound}
+          >
+            NEXT ROUND
+          </Button>
+          <Button onClick={refresh}>REFRESH DATA</Button>
+        </Space>
       </div>
-      <Space>
-        <Button
-          disabled={
-            adminGameState?.gameState !== GameState.PRE_GAME ||
-            adminGameState?.players.length < 2
-          }
-          onClick={handleStartGame}
-        >
-          START GAME
-        </Button>
-        <Button
-          disabled={adminGameState?.gameState === GameState.PRE_GAME}
-          onClick={reset}
-        >
-          RESET GAME
-        </Button>
-        <Button
-          disabled={adminGameState?.gameState !== GameState.ROUND_END}
-          onClick={nextRound}
-        >
-          NEXT ROUND
-        </Button>
-        <Button onClick={refresh}>REFRESH DATA</Button>
-      </Space>
+      <div id="footer">
+        <div id="info">
+          <Space direction="vertical">
+            <GameInfo context={AdminContext} />
+            <Button>CONFIG GAME</Button>
+          </Space>
+        </div>
+        <div>
+          <ThemeToggle />
+        </div>
+      </div>
     </div>
   );
 };

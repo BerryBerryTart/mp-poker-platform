@@ -1,14 +1,9 @@
-import {
-  createContext,
-  useRef,
-  useState,
-  type PropsWithChildren,
-  useEffect,
-} from "react";
+import { createContext, useRef, useState, type PropsWithChildren } from "react";
 import { io, Socket } from "socket.io-client";
 import { DefaultEventsMap } from "socket.io";
 import { SocketEvent } from "../../utils/enums";
 import {
+  GameConfigType,
   PlaceBetType,
   Player,
   PlayerActionType,
@@ -21,6 +16,7 @@ export interface GameContextType {
     connected: boolean;
     gameState: SerialisedGame | undefined;
     self: Player | undefined;
+    gameConfig: GameConfigType;
   };
   actions: {
     connect: (userName: string | undefined, userID: string) => void;
@@ -36,6 +32,7 @@ export const GameContext = createContext({});
 export const GameProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [connected, setConnected] = useState(false);
   const [gameState, setGameState] = useState<SerialisedGame | undefined>();
+  const [gameConfig, setGameConfig] = useState<GameConfigType | undefined>();
   const [api, contextHolder] = notification.useNotification();
 
   const [self, setSelf] = useState<Player | undefined>();
@@ -44,7 +41,7 @@ export const GameProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   const connect = (userName: string | undefined, userID: string) => {
     if (sock.current) return;
-    const socket = io("ws://localhost:4000", {
+    const socket = io(import.meta.env.VITE_WEBSOCKET_URL, {
       auth: { userID: userID, userName: userName ?? "" },
     });
 
@@ -53,6 +50,9 @@ export const GameProvider: React.FC<PropsWithChildren> = ({ children }) => {
       setGameState(payload);
       const you = payload.players.find((el) => el.userID === userID);
       setSelf(you);
+    });
+    socket.on(SocketEvent.SEND_GAME_CONFIG, (payload: GameConfigType) => {
+      setGameConfig(payload);
     });
     socket.on(SocketEvent.ERROR, (payload: string) => {
       api.error({
@@ -102,7 +102,7 @@ export const GameProvider: React.FC<PropsWithChildren> = ({ children }) => {
   };
 
   const value = {
-    state: { connected, gameState, self },
+    state: { connected, gameState, self, gameConfig },
     actions: { connect, disconnect, placeBet, check, fold },
   } as GameContextType;
   return (

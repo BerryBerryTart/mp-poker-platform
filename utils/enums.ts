@@ -87,7 +87,7 @@ enum SocketEvent {
   CHECK = "player_check",
   FOLD = "player_fold",
   ADMIN_SEND_GAME_STATE = "admin_send_game_state",
-  ADMIN_SEND_GAME_CONFIG = "admin_send_game_config",
+  SEND_GAME_CONFIG = "send_game_config",
   ADMIN_START_GAME = "admin_start_game",
   ADMIN_RESET_GAME = "admin_reset_game",
   ADMIN_NEXT_ROUND = "admin_next_round",

@@ -23,6 +23,8 @@ interface GameConfigType {
   intialHandAmt?: number;
   enableTieBreaker?: boolean;
   minBuyIn?: number;
+  nextRoundDelay?: number;
+  manualNextRound?: boolean;
 }
 
 interface AuthType {

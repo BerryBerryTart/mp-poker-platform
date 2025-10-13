@@ -27,7 +27,7 @@ export const CommunityCards = (props: CommunityCardsProps) => {
       return u?.userName + " Won!";
     }
 
-    const currPlayerID = gameState?.playerQueue[0];
+    const currPlayerID = gameState?.playerQueue && gameState?.playerQueue[0];
     if (!currPlayerID) return "";
     if (currPlayerID === userID) return "Your Turn!";
     const currPlayer = gameState.players.find(

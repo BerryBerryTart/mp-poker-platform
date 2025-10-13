@@ -334,7 +334,8 @@ class GameManager {
   minBuyIn: number = 10;
   winnerID: string | undefined = undefined;
   actions: GameActionType[] = [];
-  manualNextRound = true;
+  manualNextRound = false;
+  nextRoundDelay: number | undefined = 5;
 
   addPlayer(userName: string, userID: string) {
     const player: Player = {
@@ -390,6 +391,8 @@ class GameManager {
       enableTieBreaker: this.enableTieBreaker,
       intialHandAmt: this.initalHandAmt,
       minBuyIn: this.minBuyIn,
+      nextRoundDelay: this.nextRoundDelay,
+      manualNextRound: this.manualNextRound,
     } as GameConfigType;
   }
 
@@ -522,7 +525,7 @@ class GameManager {
      * player left MUST have bet at least the table's wager for this to trigger
      */
     const checkedArr = this.players.filter(
-      (el) => el.state === PlayerState.CHECKED
+      (el) => el.state === PlayerState.CHECKED && el.chips > 0
     );
     const wagerArr = this.players.map((el) => el.wager) ?? [];
 
@@ -532,22 +535,6 @@ class GameManager {
         return;
       }
       //else no one else can make a move so end game
-      this.flop.push(...this.drawCards(5 - this.flop.length));
-      this.gameState = GameState.ROUND_END;
-      this.getRoundWinner();
-    }
-
-    if (this.isRoundOrGameOver()) return;
-
-    //check if everyoen is all in, if so then advance towards end
-    let everyoneAllIn = true;
-    for (let i = 0; i < checkedArr.length; i++) {
-      if (checkedArr[i].chips !== 0) {
-        everyoneAllIn = false;
-        break;
-      }
-    }
-    if (everyoneAllIn) {
       this.flop.push(...this.drawCards(5 - this.flop.length));
       this.gameState = GameState.ROUND_END;
       this.getRoundWinner();
@@ -644,7 +631,8 @@ class GameManager {
       // next player is betting so stop shifting
       const u = this.playerValidation(this.playerQueue[0]);
       if (u.state === PlayerState.BETTING || u.state === PlayerState.CHECKED) {
-        break;
+        //user is not all in
+        if (u.chips !== 0) break;
       }
       iteration++;
     }

@@ -4,7 +4,7 @@ import { Server, Socket } from "socket.io";
 import cors from "cors";
 import { AuthType, PlaceBetType, PlayerActionType } from "../utils/types";
 import { GameManager } from "../utils/utils";
-import { SocketEvent } from "../utils/enums";
+import { GameState, SocketEvent } from "../utils/enums";
 
 const app = express();
 const server = createServer(app); // http
@@ -23,6 +23,9 @@ interface GameSocket extends Socket {
 }
 
 function sendGameStateToAll(adminOnly = false) {
+  if (game.gameState === GameState.ROUND_END && game.nextRoundDelay) {
+    setTimeout(() => {}, game.nextRoundDelay * 1000);
+  }
   if (!adminOnly) {
     for (let [_, s] of io.of("/").sockets) {
       s.emit(
@@ -34,6 +37,16 @@ function sendGameStateToAll(adminOnly = false) {
   io.of("/admin").emit(
     SocketEvent.ADMIN_SEND_GAME_STATE,
     game.serialiseGame("", true)
+  );
+}
+
+function sendGameConfigToAll() {
+  for (let [_, s] of io.of("/").sockets) {
+    s.emit(SocketEvent.SEND_GAME_CONFIG, game.serialiseGameDetails());
+  }
+  io.of("/admin").emit(
+    SocketEvent.ADMIN_SEND_GAME_STATE,
+    game.serialiseGameDetails()
   );
 }
 
@@ -68,6 +81,7 @@ io.on(SocketEvent.NEW_CONNECTION, (socket: GameSocket) => {
   socket.userID = auth.userID;
 
   sendGameStateToAll();
+  sendGameConfigToAll() 
 
   socket.on(SocketEvent.PLACE_BET, (payload: PlaceBetType) => {
     try {
@@ -110,7 +124,7 @@ io.on(SocketEvent.NEW_CONNECTION, (socket: GameSocket) => {
 
 io.of("/admin").on(SocketEvent.NEW_CONNECTION, (socket: GameSocket) => {
   socket.emit(SocketEvent.ADMIN_SEND_GAME_STATE, game.serialiseGame("", true));
-  socket.emit(SocketEvent.ADMIN_SEND_GAME_CONFIG, game.serialiseGameDetails());
+  socket.emit(SocketEvent.SEND_GAME_CONFIG, game.serialiseGameDetails());
   socket.on(SocketEvent.ADMIN_START_GAME, () => {
     //deal out cards and broadcast
     console.log("STARTING GAME");

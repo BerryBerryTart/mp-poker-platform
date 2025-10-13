@@ -48,7 +48,7 @@ export const AdminProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   const adminConnect = () => {
     if (sock.current) return;
-    const socket = io("ws://localhost:4000/admin");
+    const socket = io(import.meta.env.VITE_WEBSOCKET_URL + "/admin");
 
     socket.on(SocketEvent.CLIENT_DISCONNECT, () => {
       setConnected(false);
@@ -56,7 +56,7 @@ export const AdminProvider: React.FC<PropsWithChildren> = ({ children }) => {
     socket.on(SocketEvent.ADMIN_SEND_GAME_STATE, (payload: SerialisedGame) => {
       setAdminGameState(payload);
     });
-    socket.on(SocketEvent.ADMIN_SEND_GAME_CONFIG, (payload: GameConfigType) => {
+    socket.on(SocketEvent.SEND_GAME_CONFIG, (payload: GameConfigType) => {
       setGameConfig(payload);
     });
     socket.on(SocketEvent.ERROR, (payload: string) => {
