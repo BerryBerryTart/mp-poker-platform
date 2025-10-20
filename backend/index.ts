@@ -2,7 +2,12 @@ import express from "express";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
 import cors from "cors";
-import { AuthType, PlaceBetType, PlayerActionType } from "../utils/types";
+import {
+  AuthType,
+  GameConfigType,
+  PlaceBetType,
+  PlayerActionType,
+} from "../utils/types";
 import { GameManager } from "../utils/utils";
 import { GameState, SocketEvent } from "../utils/enums";
 
@@ -22,10 +27,7 @@ interface GameSocket extends Socket {
   userID?: string;
 }
 
-function sendGameStateToAll(adminOnly = false) {
-  if (game.gameState === GameState.ROUND_END && game.nextRoundDelay) {
-    setTimeout(() => {}, game.nextRoundDelay * 1000);
-  }
+function broadcastGame(adminOnly = false) {
   if (!adminOnly) {
     for (let [_, s] of io.of("/").sockets) {
       s.emit(
@@ -40,12 +42,24 @@ function sendGameStateToAll(adminOnly = false) {
   );
 }
 
+function sendGameStateToAll(adminOnly = false) {
+  // rebroadcast with next next round game state
+  if (game.gameState === GameState.ROUND_END && game.nextRoundDelay) {
+    setTimeout(() => {
+      console.log("STARTING NEXT ROUND");
+      game.setupGame(true);
+      broadcastGame(adminOnly);
+    }, game.nextRoundDelay * 1000);
+  }
+  broadcastGame(adminOnly);
+}
+
 function sendGameConfigToAll() {
   for (let [_, s] of io.of("/").sockets) {
     s.emit(SocketEvent.SEND_GAME_CONFIG, game.serialiseGameDetails());
   }
   io.of("/admin").emit(
-    SocketEvent.ADMIN_SEND_GAME_STATE,
+    SocketEvent.SEND_GAME_CONFIG,
     game.serialiseGameDetails()
   );
 }
@@ -81,7 +95,7 @@ io.on(SocketEvent.NEW_CONNECTION, (socket: GameSocket) => {
   socket.userID = auth.userID;
 
   sendGameStateToAll();
-  sendGameConfigToAll() 
+  sendGameConfigToAll();
 
   socket.on(SocketEvent.PLACE_BET, (payload: PlaceBetType) => {
     try {
@@ -165,6 +179,10 @@ io.of("/admin").on(SocketEvent.NEW_CONNECTION, (socket: GameSocket) => {
       }
     }
   );
+  socket.on(SocketEvent.ADMIN_UPDATE_GAME_CONFIG, (payload: GameConfigType) => {
+    game.updateGameDetails(payload);
+    sendGameConfigToAll();
+  });
   socket.on(SocketEvent.REFRESH_DATA, () => {
     console.log("REFRESH DATA REQUEST");
     sendGameStateToAll(true);

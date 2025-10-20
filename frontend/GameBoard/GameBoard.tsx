@@ -46,7 +46,7 @@ export const GameBoard = () => {
   const { theme } = themeContext.state;
 
   const gameContext = useContext(GameContext) as GameContextType;
-  const { connected, gameState, self } = gameContext.state;
+  const { connected, gameState, self, gameConfig } = gameContext.state;
   const { connect, disconnect, placeBet, check, fold } = gameContext.actions;
 
   useEffect(() => {
@@ -397,7 +397,7 @@ export const GameBoard = () => {
                     <Typography.Title level={4} style={{marginTop: "0px"}}>
                       Game Configuration
                     </Typography.Title>
-                    <GameInfo context={GameContext} />
+                    <GameInfo gameConfig={gameConfig} />
                   </>
                 ),
                 color: theme === Theme.DARK ? "#262626" : "#f1f1f1ff",

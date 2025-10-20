@@ -92,6 +92,7 @@ enum SocketEvent {
   ADMIN_RESET_GAME = "admin_reset_game",
   ADMIN_NEXT_ROUND = "admin_next_round",
   ADMIN_DISCONNECT_USER = "admin_disconnect_user",
+  ADMIN_UPDATE_GAME_CONFIG = "admin_update_game_config",
   REFRESH_DATA = "refresh_data",
   ERROR = "error_message",
 }

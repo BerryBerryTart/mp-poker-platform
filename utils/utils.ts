@@ -397,10 +397,13 @@ class GameManager {
   }
 
   updateGameDetails(config: GameConfigType) {
-    if (config.enableTieBreaker)
+    if (typeof config.enableTieBreaker === "boolean")
       this.enableTieBreaker = config.enableTieBreaker;
     if (config.intialHandAmt) this.initalHandAmt = config.intialHandAmt;
-    if (config.minBuyIn) this.initalHandAmt = config.minBuyIn;
+    if (config.minBuyIn) this.minBuyIn = config.minBuyIn;
+    if (typeof config.manualNextRound === "boolean")
+      this.manualNextRound = config.manualNextRound;
+    if (config.nextRoundDelay) this.nextRoundDelay = config.nextRoundDelay;
   }
 
   setupGame(nextRound = false) {
@@ -687,10 +690,6 @@ class GameManager {
         color: ActionColour.DEFAULT,
         action: "Game Over.",
       });
-    }
-
-    if (!this.manualNextRound) {
-      this.setupGame(true);
     }
   }
 

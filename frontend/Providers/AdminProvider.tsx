@@ -24,6 +24,7 @@ export interface AdminContextType {
     refresh: () => void;
     nextRound: () => void;
     disconnectUser: (userID: string) => void;
+    updateGameConfig: (config: GameConfigType) => void;
   };
 }
 
@@ -100,6 +101,11 @@ export const AdminProvider: React.FC<PropsWithChildren> = ({ children }) => {
       sock.current!.emit(SocketEvent.ADMIN_DISCONNECT_USER, { userID });
   };
 
+  const updateGameConfig = (config: GameConfigType) => {
+    if (sockCheck())
+      sock.current!.emit(SocketEvent.ADMIN_UPDATE_GAME_CONFIG, config);
+  };
+
   const value = {
     state: { adminGameState, gameConfig, connected },
     actions: {
@@ -109,6 +115,7 @@ export const AdminProvider: React.FC<PropsWithChildren> = ({ children }) => {
       refresh,
       nextRound,
       disconnectUser,
+      updateGameConfig,
     },
   } as AdminContextType;
   return (

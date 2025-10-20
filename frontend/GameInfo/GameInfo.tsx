@@ -1,36 +1,46 @@
-import { useContext } from "react";
-import { AdminContextType } from "../Providers/AdminProvider";
-import { Space, Typography } from "../antdES";
-import { GameContextType } from "../Providers/GameProvider";
+import { ReactNode, useContext } from "react";
+import { Space, Tag, Typography } from "../antdES";
+import { GameConfigType } from "../../utils/types";
 
 interface GameInfoProps {
-  context: React.Context<{}>;
+  gameConfig: GameConfigType | undefined;
 }
 
 export const GameInfo = (props: GameInfoProps) => {
-  const { context } = props;
-  const infoContext = useContext(context) as AdminContextType | GameContextType;
-  const { gameConfig } = infoContext.state;
+  const { gameConfig } = props;
+
+  const booleanTag = (val: boolean | undefined): ReactNode => {
+    if (val === undefined) return <Tag color="default">???</Tag>;
+    return val ? <Tag color="green">True</Tag> : <Tag color="red">False</Tag>;
+  };
+
+  const numberTag = (val: number | undefined, text?: string): ReactNode => {
+    if (val === undefined) return <Tag color="default">???</Tag>;
+    return (
+      <Tag color="blue">
+        {val} {text ?? ""}
+      </Tag>
+    );
+  };
 
   return (
     <div>
       <Space direction="vertical">
         <Typography.Text>
-          Tie Breaker Enabled:{" "}
-          {gameConfig?.enableTieBreaker?.toString().toUpperCase() ?? "?"}
+          Tie Breaker Enabled: {booleanTag(gameConfig?.enableTieBreaker)}
         </Typography.Text>
         <Typography.Text>
-          Initial Hand Amount: {gameConfig?.intialHandAmt ?? "?"} chips
+          Initial Hand Amount: {numberTag(gameConfig?.intialHandAmt, "chips")}
         </Typography.Text>
         <Typography.Text>
-          Minimum Buy In: {gameConfig?.minBuyIn ?? "?"} chips
+          Minimum Buy In: {numberTag(gameConfig?.minBuyIn, "chips")}
         </Typography.Text>
         <Typography.Text>
-          Time Between Rounds: {gameConfig?.nextRoundDelay ?? "?"} seconds
+          Time Between Rounds:{" "}
+          {numberTag(gameConfig?.nextRoundDelay, "seconds")}
         </Typography.Text>
         <Typography.Text>
-          Manual Start Next Round:{" "}
-          {gameConfig?.manualNextRound?.toString().toUpperCase() ?? "?"}
+          Manual Start Next Round: {booleanTag(gameConfig?.manualNextRound)}
         </Typography.Text>
       </Space>
     </div>

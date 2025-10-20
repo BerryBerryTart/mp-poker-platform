@@ -1,7 +1,17 @@
-import { ReactNode, useContext, useEffect } from "react";
+import { ReactNode, useContext, useEffect, useState } from "react";
 import { AdminContext, AdminContextType } from "../Providers/AdminProvider";
-import { Button, Card, Popover, Space, Typography } from "../antdES";
-import { Player } from "../../utils/types";
+import {
+  Button,
+  Card,
+  Form,
+  InputNumber,
+  Modal,
+  Popover,
+  Radio,
+  Space,
+  Typography,
+} from "../antdES";
+import { GameConfigType, Player } from "../../utils/types";
 import { CardDisplay } from "../CardDisplay/CardDisplay";
 import { GameState } from "../../utils/enums";
 import { CommunityCards } from "../CommunityCards/CommunityCards";
@@ -17,8 +27,9 @@ import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
 import { GameInfo } from "../GameInfo/GameInfo";
 
 export const Admin = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const adminContext = useContext(AdminContext) as AdminContextType;
-  const { adminGameState } = adminContext.state;
+  const { adminGameState, gameConfig } = adminContext.state;
   const {
     adminConnect,
     startGame,
@@ -26,7 +37,9 @@ export const Admin = () => {
     refresh,
     nextRound,
     disconnectUser,
+    updateGameConfig,
   } = adminContext.actions;
+  const [form] = Form.useForm();
 
   useEffect(() => {
     adminConnect();
@@ -128,8 +141,70 @@ export const Admin = () => {
     );
   };
 
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleOk = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+  };
+
+  const onCreate = (values: GameConfigType) => {
+    updateGameConfig(values);
+    setIsModalOpen(false);
+  };
+
   return (
     <div id="admin-container">
+      <Modal
+        title="Update Game Configuration"
+        closable={{ "aria-label": "Custom Close Button" }}
+        open={isModalOpen}
+        destroyOnHidden
+        onOk={handleOk}
+        onCancel={handleCancel}
+        okText="Create"
+        cancelText="Cancel"
+        okButtonProps={{ autoFocus: true, htmlType: "submit" }}
+        modalRender={(dom) => (
+          <Form
+            layout="vertical"
+            form={form}
+            name="form_in_modal"
+            initialValues={gameConfig}
+            clearOnDestroy
+            onFinish={(values) => onCreate(values)}
+          >
+            {dom}
+          </Form>
+        )}
+      >
+        <Form.Item name="enableTieBreaker" label="Tie Breaker Enabled">
+          <Radio.Group>
+            <Radio value={true}>True</Radio>
+            <Radio value={false}>False</Radio>
+          </Radio.Group>
+        </Form.Item>
+        <Form.Item name="intialHandAmt" label="Inital Hand Amount">
+          <InputNumber />
+        </Form.Item>
+        <Form.Item name="minBuyIn" label="Minumum Buy In">
+          <InputNumber />
+        </Form.Item>
+        <Form.Item name="nextRoundDelay" label="Next Round Delay (seconds)">
+          <InputNumber min={0} max={10} />
+        </Form.Item>
+        <Form.Item name="manualNextRound" label="Manual Start Next Round">
+          <Radio.Group>
+            <Radio value={true}>True</Radio>
+            <Radio value={false}>False</Radio>
+          </Radio.Group>
+        </Form.Item>
+      </Modal>
       <div id="players-container">
         <Space>{getPlayers()}</Space>
       </div>
@@ -163,8 +238,8 @@ export const Admin = () => {
       <div id="footer">
         <div id="info">
           <Space direction="vertical">
-            <GameInfo context={AdminContext} />
-            <Button>CONFIG GAME</Button>
+            <GameInfo gameConfig={gameConfig} />
+            <Button onClick={showModal}>CONFIG GAME</Button>
           </Space>
         </div>
         <div>
