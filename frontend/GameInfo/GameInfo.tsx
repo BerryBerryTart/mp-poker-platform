@@ -1,4 +1,4 @@
-import { ReactNode, useContext } from "react";
+import { ReactNode } from "react";
 import { Space, Tag, Typography } from "../antdES";
 import { GameConfigType } from "../../utils/types";
 
@@ -14,10 +14,14 @@ export const GameInfo = (props: GameInfoProps) => {
     return val ? <Tag color="green">True</Tag> : <Tag color="red">False</Tag>;
   };
 
-  const numberTag = (val: number | undefined, text?: string): ReactNode => {
+  const getTag = (
+    val: string | number | undefined,
+    color: string,
+    text?: string
+  ): ReactNode => {
     if (val === undefined) return <Tag color="default">???</Tag>;
     return (
-      <Tag color="blue">
+      <Tag color={color}>
         {val} {text ?? ""}
       </Tag>
     );
@@ -27,17 +31,23 @@ export const GameInfo = (props: GameInfoProps) => {
     <div>
       <Space direction="vertical">
         <Typography.Text>
-          Tie Breaker Enabled: {booleanTag(gameConfig?.enableTieBreaker)}
+          Cards Per Suit:{" "}
+          {getTag(gameConfig?.cardsPerSuit, "purple", "cards")}
         </Typography.Text>
         <Typography.Text>
-          Initial Hand Amount: {numberTag(gameConfig?.intialHandAmt, "chips")}
+          Total Suits:{" "}
+          {getTag(gameConfig?.totalSuits, "gold", "suits")}
         </Typography.Text>
         <Typography.Text>
-          Minimum Buy In: {numberTag(gameConfig?.minBuyIn, "chips")}
+          Initial Hand Amount:{" "}
+          {getTag(gameConfig?.intialHandAmt, "blue", "chips")}
+        </Typography.Text>
+        <Typography.Text>
+          Minimum Buy In: {getTag(gameConfig?.minBuyIn, "blue", "chips")}
         </Typography.Text>
         <Typography.Text>
           Time Between Rounds:{" "}
-          {numberTag(gameConfig?.nextRoundDelay, "seconds")}
+          {getTag(gameConfig?.nextRoundDelay, "cyan", "seconds")}
         </Typography.Text>
         <Typography.Text>
           Manual Start Next Round: {booleanTag(gameConfig?.manualNextRound)}

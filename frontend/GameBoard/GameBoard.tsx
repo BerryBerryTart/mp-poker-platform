@@ -22,13 +22,7 @@ import {
   playerStateToString,
 } from "../../utils/utils";
 import { CommunityCards } from "../CommunityCards/CommunityCards";
-import {
-  ActionColour,
-  GameState,
-  PlayerState,
-  Card as CardEnum,
-  Theme,
-} from "../../utils/enums";
+import { ActionColour, GameState, PlayerState, Theme } from "../../utils/enums";
 import { Player } from "../../utils/types";
 
 import Info from "../Assets/Info.svg";
@@ -128,7 +122,15 @@ export const GameBoard = () => {
   };
 
   const fetchHandString = (p: Player): string => {
-    return handTypeToString(getHandType(p, gameState?.flop ?? []));
+    if (!gameState || !gameConfig) return "";
+    return handTypeToString(
+      getHandType(
+        p.hand,
+        gameState.flop,
+        gameConfig.cardsPerSuit,
+        gameConfig.handLimit
+      ).type
+    );
   };
 
   const handleRaiseAmtChange = (value: any) => {
@@ -238,7 +240,7 @@ export const GameBoard = () => {
   };
 
   const renderHand = (p?: Player): ReactNode[] => {
-    let h: CardEnum[] = [];
+    let h: string[] = [];
     if (p) {
       h = p.hand;
     } else if (self?.hand) {
@@ -250,8 +252,9 @@ export const GameBoard = () => {
       components.push(
         <CardDisplay
           key={i.toString()}
-          card={h[i] ? h[i] : undefined}
+          card={h[i] ? h[i] : ""}
           small={!!p}
+          gameConfig={gameConfig}
         />
       );
     }
@@ -260,9 +263,13 @@ export const GameBoard = () => {
   };
 
   const getHandTypeString = () => {
-    if (!self?.hand || !gameState?.flop) return "";
-    if ([...self.hand, ...gameState.flop].length === 0) return "";
-    const h = getHandType(self, gameState.flop);
+    if (!self || !gameState || !gameConfig) return "";
+    const h = getHandType(
+      self.hand,
+      gameState.flop,
+      gameConfig.cardsPerSuit,
+      gameConfig.handLimit
+    ).type;
     return handTypeToString(h);
   };
 
@@ -317,7 +324,7 @@ export const GameBoard = () => {
       <div id="players-container">
         <Space>{getPlayers()}</Space>
       </div>
-      <CommunityCards gameState={gameState} userID={userID.current} />
+      <CommunityCards gameState={gameState} userID={userID.current} gameConfig={gameConfig} />
       <div id="action-container">
         <div id="timeline-container">{renderActions()}</div>
         <Typography.Text italic type="secondary">
@@ -394,7 +401,7 @@ export const GameBoard = () => {
               tooltip={{
                 overlay: (
                   <>
-                    <Typography.Title level={4} style={{marginTop: "0px"}}>
+                    <Typography.Title level={4} style={{ marginTop: "0px" }}>
                       Game Configuration
                     </Typography.Title>
                     <GameInfo gameConfig={gameConfig} />

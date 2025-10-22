@@ -65,7 +65,7 @@ export const Admin = () => {
 
     for (let i = 0; i < 2; i++) {
       components.push(
-        <CardDisplay small key={i.toString()} card={h[i] ? h[i] : undefined} />
+        <CardDisplay small key={i.toString()} card={h[i] ? h[i] : ""} gameConfig={gameConfig}/>
       );
     }
 
@@ -73,7 +73,15 @@ export const Admin = () => {
   };
 
   const fetchHandString = (p: Player): string => {
-    return handTypeToString(getHandType(p, adminGameState?.flop ?? []));
+    if (!adminGameState || !gameConfig) return "";
+    return handTypeToString(
+      getHandType(
+        p.hand,
+        adminGameState.flop ?? [],
+        gameConfig.cardsPerSuit,
+        gameConfig.handLimit
+      ).type
+    );
   };
 
   const getPlayers = (): ReactNode[] => {
@@ -209,7 +217,7 @@ export const Admin = () => {
         <Space>{getPlayers()}</Space>
       </div>
       <div id="game-container">
-        <CommunityCards gameState={adminGameState} />
+        <CommunityCards gameState={adminGameState} gameConfig={gameConfig} />
         <Space>
           <Button
             disabled={

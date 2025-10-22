@@ -1,30 +1,33 @@
-import { ActionColour, Card, GameState, PlayerState } from "./enums";
+import { ActionColour, GameState, HandType, PlayerState } from "./enums";
 
 interface SerialisedGame {
   pot: number;
   players: Player[];
-  flop: Card[];
+  flop: string[];
   playerQueue: string[];
   gameState: GameState;
-  winnerID?: string | undefined;
+  winnerIDs: string[];
   actions: GameActionType[];
+  
 }
 
 interface Player {
   userName: string;
   userID: string;
-  hand: Card[];
+  hand: string[];
   chips: number;
   wager: number;
   state: PlayerState;
 }
 
 interface GameConfigType {
-  intialHandAmt?: number;
-  enableTieBreaker?: boolean;
-  minBuyIn?: number;
-  nextRoundDelay?: number;
-  manualNextRound?: boolean;
+  intialHandAmt: number;
+  minBuyIn: number;
+  nextRoundDelay: number;
+  manualNextRound: boolean;
+  cardsPerSuit: number;
+  handLimit: number;
+  totalSuits: number;
 }
 
 interface AuthType {
@@ -45,6 +48,11 @@ interface GameActionType {
   action: string;
 }
 
+interface HandTypeReturn {
+  type: HandType;
+  hand: string[];
+}
+
 export {
   Player,
   GameConfigType,
@@ -52,5 +60,6 @@ export {
   SerialisedGame,
   PlaceBetType,
   PlayerActionType,
-  GameActionType 
+  GameActionType,
+  HandTypeReturn,
 };

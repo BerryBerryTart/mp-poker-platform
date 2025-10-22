@@ -1,69 +1,3 @@
-enum Card {
-  // HEARTS
-  HEART_ONE = "H1",
-  HEART_TWO = "H2",
-  HEART_THREE = "H3",
-  HEART_FOUR = "H4",
-  HEART_FIVE = "H5",
-  HEART_SIX = "H6",
-  HEART_SEVEN = "H7",
-  HEART_EIGHT = "H8",
-  HEART_NINE = "H9",
-  HEART_TEN = "H10",
-  HEART_JACK = "H11",
-  HEART_QUEEN = "H12",
-  HEART_KING = "H13",
-  HEART_ACE = "H14",
-
-  // DIAMONDS
-  DIAMOND_ONE = "D1",
-  DIAMOND_TWO = "D2",
-  DIAMOND_THREE = "D3",
-  DIAMOND_FOUR = "D4",
-  DIAMOND_FIVE = "D5",
-  DIAMOND_SIX = "D6",
-  DIAMOND_SEVEN = "D7",
-  DIAMOND_EIGHT = "D8",
-  DIAMOND_NINE = "D9",
-  DIAMOND_TEN = "D10",
-  DIAMOND_JACK = "D11",
-  DIAMOND_QUEEN = "D12",
-  DIAMOND_KING = "D13",
-  DIAMOND_ACE = "D14",
-
-  //SPADES
-  SPADE_ONE = "S1",
-  SPADE_TWO = "S2",
-  SPADE_THREE = "S3",
-  SPADE_FOUR = "S4",
-  SPADE_FIVE = "S5",
-  SPADE_SIX = "S6",
-  SPADE_SEVEN = "S7",
-  SPADE_EIGHT = "S8",
-  SPADE_NINE = "S9",
-  SPADE_TEN = "S10",
-  SPADE_JACK = "S11",
-  SPADE_QUEEN = "S12",
-  SPADE_KING = "S13",
-  SPADE_ACE = "S14",
-
-  // CLUBS
-  CLUB_ONE = "C1",
-  CLUB_TWO = "C2",
-  CLUB_THREE = "C3",
-  CLUB_FOUR = "C4",
-  CLUB_FIVE = "C5",
-  CLUB_SIX = "C6",
-  CLUB_SEVEN = "C7",
-  CLUB_EIGHT = "C8",
-  CLUB_NINE = "C9",
-  CLUB_TEN = "C10",
-  CLUB_JACK = "C11",
-  CLUB_QUEEN = "C12",
-  CLUB_KING = "C13",
-  CLUB_ACE = "C14",
-}
-
 enum HandType {
   ROYAL_FLUSH = "ROYAL_FLUSH",
   STRAIGHT_FLUSH = "STRAIGHT_FLUSH",
@@ -131,7 +65,6 @@ enum ActionColour {
 }
 
 export {
-  Card,
   HandType,
   SocketEvent,
   GameState,

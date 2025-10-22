@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { CardDisplay } from "../CardDisplay/CardDisplay";
-import { SerialisedGame } from "../../utils/types";
+import { GameConfigType, SerialisedGame } from "../../utils/types";
 import { Typography } from "../antdES";
 
 import "./CommunityCards.less";
@@ -9,22 +9,26 @@ import { GameState } from "../../utils/enums";
 interface CommunityCardsProps {
   gameState: SerialisedGame | undefined;
   userID?: string;
+  gameConfig?: GameConfigType;
 }
 
 export const CommunityCards = (props: CommunityCardsProps) => {
-  const { gameState, userID } = props;
+  const { gameState, userID, gameConfig } = props;
 
   const getCurrentPlayerName = () => {
     // game over
     if (
       (gameState?.gameState === GameState.ROUND_END ||
         gameState?.gameState === GameState.GAME_END) &&
-      gameState.winnerID
+      gameState.winnerIDs.length > 0
     ) {
-      const u = gameState.players.find(
-        (el) => el.userID === gameState.winnerID
-      );
-      return u?.userName + " Won!";
+      if (gameState.winnerIDs.length === 1) {
+        const u = gameState.players.find(
+          (el) => el.userID === gameState.winnerIDs[0]
+        );
+        return u?.userName + " Won!";
+      }
+      return "Tie.";
     }
 
     const currPlayerID = gameState?.playerQueue && gameState?.playerQueue[0];
@@ -43,7 +47,7 @@ export const CommunityCards = (props: CommunityCardsProps) => {
 
     for (let i = 0; i < 5; i++) {
       components.push(
-        <CardDisplay key={i.toString()} card={c[i] ? c[i] : undefined} />
+        <CardDisplay key={i.toString()} card={c[i] ? c[i] : ""} gameConfig={gameConfig}/>
       );
     }
 

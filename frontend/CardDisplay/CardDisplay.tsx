@@ -1,4 +1,4 @@
-import { Card, Theme } from "../../utils/enums";
+import { Theme } from "../../utils/enums";
 import { getCardNumber } from "../../utils/utils";
 
 import "./CardDisplay.less";
@@ -9,36 +9,39 @@ import Diamond from "../Assets/Diamond.svg";
 import Unknown from "../Assets/Unknown.svg";
 import { ThemeContext } from "../Providers/ThemeProvider";
 import { useContext } from "react";
+import { GameConfigType } from "../../utils/types";
 
 export interface CardProps {
-  card?: Card;
+  card: string;
   small?: boolean;
+  gameConfig?: GameConfigType;
 }
 
 export const CardDisplay = (props: CardProps) => {
-  const { card, small } = props;
+  const { card, small, gameConfig } = props;
 
   const themeContext = useContext(ThemeContext);
   const { theme } = themeContext.state;
 
-  const getCardComp = (card: Card | undefined) => {
+  const getCardComp = (card: string | undefined) => {
     // unturned card
-    if (!card) {
+    if (!card || !gameConfig) {
       return <img className="suit-icon" src={Unknown} />;
     }
+    const { cardsPerSuit } = gameConfig;
 
     const suitChar = card.toString()[0];
     const cardNum = getCardNumber(card);
     let cardStr = "";
     let cardImg;
     switch (suitChar) {
-      case "C":
+      case "A":
         cardImg = Club;
         break;
-      case "S":
+      case "B":
         cardImg = Spade;
         break;
-      case "H":
+      case "C":
         cardImg = Heart;
         break;
       case "D":
@@ -47,20 +50,20 @@ export const CardDisplay = (props: CardProps) => {
     }
 
     switch (cardNum) {
-      case 11:
+      case cardsPerSuit - 3:
         cardStr = "J";
         break;
-      case 12:
+      case cardsPerSuit - 2:
         cardStr = "Q";
         break;
-      case 13:
+      case cardsPerSuit - 1:
         cardStr = "K";
         break;
-      case 14:
+      case cardsPerSuit:
         cardStr = "A";
         break;
       default:
-        cardStr = cardNum.toString();
+        cardStr = (cardNum + 1).toString();
     }
 
     return (
