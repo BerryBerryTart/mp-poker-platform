@@ -5,6 +5,7 @@ import { Typography } from "../antdES";
 
 import "./CommunityCards.less";
 import { GameState } from "../../utils/enums";
+import { flopSum } from "../../utils/utils";
 
 interface CommunityCardsProps {
   gameState: SerialisedGame | undefined;
@@ -42,10 +43,11 @@ export const CommunityCards = (props: CommunityCardsProps) => {
   };
 
   const renderCommunityCards = (): ReactNode[] => {
+    const flopLen = flopSum(gameConfig?.drawPhases as number[] ?? [])
     const c = gameState?.flop ?? [];
     const components: ReactNode[] = [];
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < flopLen; i++) {
       components.push(
         <CardDisplay key={i.toString()} card={c[i] ? c[i] : ""} gameConfig={gameConfig}/>
       );

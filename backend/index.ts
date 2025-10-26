@@ -44,7 +44,7 @@ function broadcastGame(adminOnly = false) {
 
 function sendGameStateToAll(adminOnly = false) {
   // rebroadcast with next next round game state
-  if (game.gameState === GameState.ROUND_END && game.nextRoundDelay) {
+  if (game.gameState === GameState.ROUND_END && game.nextRoundDelay && !game.manualNextRound) {
     setTimeout(() => {
       console.log("STARTING NEXT ROUND");
       game.setupGame(true);

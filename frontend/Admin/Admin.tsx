@@ -3,11 +3,15 @@ import { AdminContext, AdminContextType } from "../Providers/AdminProvider";
 import {
   Button,
   Card,
+  Col,
   Form,
+  Input,
   InputNumber,
   Modal,
   Popover,
   Radio,
+  Row,
+  Slider,
   Space,
   Typography,
 } from "../antdES";
@@ -16,6 +20,7 @@ import { CardDisplay } from "../CardDisplay/CardDisplay";
 import { GameState } from "../../utils/enums";
 import { CommunityCards } from "../CommunityCards/CommunityCards";
 import {
+  flopSum,
   getHandType,
   handTypeToString,
   playerStateToString,
@@ -28,6 +33,7 @@ import { GameInfo } from "../GameInfo/GameInfo";
 
 export const Admin = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [validForm, setValidForm] = useState(true);
   const adminContext = useContext(AdminContext) as AdminContextType;
   const { adminGameState, gameConfig } = adminContext.state;
   const {
@@ -65,7 +71,12 @@ export const Admin = () => {
 
     for (let i = 0; i < 2; i++) {
       components.push(
-        <CardDisplay small key={i.toString()} card={h[i] ? h[i] : ""} gameConfig={gameConfig}/>
+        <CardDisplay
+          small
+          key={i.toString()}
+          card={h[i] ? h[i] : ""}
+          gameConfig={gameConfig}
+        />
       );
     }
 
@@ -154,6 +165,8 @@ export const Admin = () => {
   };
 
   const handleOk = () => {
+    const vals = form.getFieldsValue() as GameConfigType;
+    updateGameConfig(vals);
     setIsModalOpen(false);
   };
 
@@ -161,23 +174,67 @@ export const Admin = () => {
     setIsModalOpen(false);
   };
 
-  const onCreate = (values: GameConfigType) => {
-    updateGameConfig(values);
-    setIsModalOpen(false);
+  const getDrawPhaseNumberArray = (value: string): number[] => {
+    const nums: number[] = [];
+
+    const valueSplit = value.split(",");
+
+    for (let i = 0; i < valueSplit.length; i++) {
+      nums.push(Number.parseInt(valueSplit[i]));
+    }
+
+    return nums;
   };
 
-  return (
-    <div id="admin-container">
+  const validateDrawPhase = (value: string) => {
+    const valueSplit = value.split(",");
+
+    for (let i = 0; i < valueSplit.length; i++) {
+      if (isNaN(Number.parseInt(valueSplit[i]))) {
+        return false;
+      }
+      if (Number.parseInt(valueSplit[i]) < 0) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const validateDrawPhasePromise = async (
+    _: any,
+    value: any
+  ): Promise<void> => {
+    if (!validateDrawPhase(value)) {
+      return Promise.reject(new Error("Invalid Array."));
+    }
+
+    if (flopSum(getDrawPhaseNumberArray(value)) <= 0) {
+      return Promise.reject(new Error("Phases must be at least 1."));
+    }
+    return Promise.resolve();
+  };
+
+  const validateForm = () => {
+    const val = form.getFieldValue("drawPhases");
+    setValidForm(validateDrawPhase(val));
+  };
+
+  const getModal = () => {
+    return (
       <Modal
         title="Update Game Configuration"
         closable={{ "aria-label": "Custom Close Button" }}
         open={isModalOpen}
         destroyOnHidden
-        onOk={handleOk}
-        onCancel={handleCancel}
-        okText="Create"
-        cancelText="Cancel"
         okButtonProps={{ autoFocus: true, htmlType: "submit" }}
+        footer={
+          <>
+            <Button onClick={handleCancel}>Cancel</Button>
+            <Button onClick={handleOk} type="primary" disabled={!validForm}>
+              Update Game
+            </Button>
+          </>
+        }
         modalRender={(dom) => (
           <Form
             layout="vertical"
@@ -185,34 +242,69 @@ export const Admin = () => {
             name="form_in_modal"
             initialValues={gameConfig}
             clearOnDestroy
-            onFinish={(values) => onCreate(values)}
+            onChange={validateForm}
           >
             {dom}
           </Form>
         )}
       >
-        <Form.Item name="enableTieBreaker" label="Tie Breaker Enabled">
-          <Radio.Group>
-            <Radio value={true}>True</Radio>
-            <Radio value={false}>False</Radio>
-          </Radio.Group>
-        </Form.Item>
-        <Form.Item name="intialHandAmt" label="Inital Hand Amount">
-          <InputNumber />
-        </Form.Item>
-        <Form.Item name="minBuyIn" label="Minumum Buy In">
-          <InputNumber />
-        </Form.Item>
-        <Form.Item name="nextRoundDelay" label="Next Round Delay (seconds)">
-          <InputNumber min={0} max={10} />
-        </Form.Item>
-        <Form.Item name="manualNextRound" label="Manual Start Next Round">
-          <Radio.Group>
-            <Radio value={true}>True</Radio>
-            <Radio value={false}>False</Radio>
-          </Radio.Group>
+        <Space size={"large"}>
+          <Form.Item name="intialHandAmt" label="Inital Hand Amount">
+            <InputNumber />
+          </Form.Item>
+          <Form.Item name="minBuyIn" label="Minumum Buy In">
+            <InputNumber />
+          </Form.Item>
+        </Space>
+        <Space size={"large"}>
+          <Form.Item name="nextRoundDelay" label="Next Round Delay (seconds)">
+            <InputNumber min={0} max={10} />
+          </Form.Item>
+          <Form.Item name="manualNextRound" label="Manual Start Next Round">
+            <Radio.Group>
+              <Radio value={true}>True</Radio>
+              <Radio value={false}>False</Radio>
+            </Radio.Group>
+          </Form.Item>
+        </Space>
+        <Row>
+          <Col span={20}>
+            <Form.Item name="totalSuits" label="Total Suits">
+              <Slider min={2} max={10} />
+            </Form.Item>
+          </Col>
+          <Col span={4}>
+            <Form.Item name="totalSuits" label=" ">
+              <InputNumber min={2} max={10} />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row>
+          <Col span={20}>
+            <Form.Item name="cardsPerSuit" label="Cards Per Suit">
+              <Slider min={1} max={100} />
+            </Form.Item>
+          </Col>
+          <Col span={4}>
+            <Form.Item name="cardsPerSuit" label=" ">
+              <InputNumber min={1} max={100} />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Form.Item
+          name="drawPhases"
+          label="Draw Phases"
+          rules={[{ validator: (_, val) => validateDrawPhasePromise(_, val) }]}
+        >
+          <Input.TextArea />
         </Form.Item>
       </Modal>
+    );
+  };
+
+  return (
+    <div id="admin-container">
+      {getModal()}
       <div id="players-container">
         <Space>{getPlayers()}</Space>
       </div>

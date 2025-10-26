@@ -14,6 +14,9 @@ import Tag from "antd/es/tag";
 import Modal from "antd/es/modal";
 import Form from "antd/es/form";
 import Radio from "antd/es/radio";
+import Slider from "antd/es/slider";
+import Row from "antd/es/row";
+import Col from "antd/es/col";
 
 export {
   ConfigProvider,
@@ -31,5 +34,8 @@ export {
   Tag,
   Modal,
   Form,
-  Radio
+  Radio,
+  Slider,
+  Row,
+  Col,
 };

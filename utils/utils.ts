@@ -494,6 +494,10 @@ const playerStateToString = (state: PlayerState): string => {
   }
 };
 
+function flopSum(drawPhases: number[]): number {
+  return drawPhases.reduce((prev, curr) => prev + curr, 0);
+}
+
 class GameManager {
   deck: string[] = [];
   flop: string[] = [];
@@ -505,11 +509,12 @@ class GameManager {
   minBuyIn: number = 10;
   winnerIDs: string[] = [];
   actions: GameActionType[] = [];
-  manualNextRound = false;
+  manualNextRound = true;
   nextRoundDelay: number = 5;
   totalSuits = 4;
   cardsPerSuit = 13;
   handLimit = 5;
+  drawPhases = [3, 1, 1];
 
   addPlayer(userName: string, userID: string) {
     const player: Player = {
@@ -569,6 +574,7 @@ class GameManager {
       cardsPerSuit: this.cardsPerSuit,
       handLimit: this.handLimit,
       totalSuits: this.totalSuits,
+      drawPhases: this.drawPhases,
     } as GameConfigType;
   }
 
@@ -580,7 +586,19 @@ class GameManager {
     if (config.nextRoundDelay) this.nextRoundDelay = config.nextRoundDelay;
     if (config.cardsPerSuit) this.cardsPerSuit = config.cardsPerSuit;
     if (config.handLimit) this.handLimit = config.handLimit;
-    if (config.totalSuits) this.totalSuits = config.totalSuits
+    if (config.totalSuits) this.totalSuits = config.totalSuits;
+    if (config.drawPhases) {
+      if (typeof config.drawPhases === "string") {
+        const nextVals: number[] = [];
+        const valueSplit = config.drawPhases.split(",");
+        for (let i = 0; i < valueSplit.length; i++) {
+          nextVals.push(Number.parseInt(valueSplit[i]));
+        }
+        this.drawPhases = nextVals;
+      } else {
+        this.drawPhases = config.drawPhases;
+      }
+    }
   }
 
   generateDeck(): string[] {
@@ -603,6 +621,7 @@ class GameManager {
     }
     this.winnerIDs = [];
     this.deck = this.generateDeck();
+    this.flop = [];
     shuffle(this.deck);
     for (let i = 0; i < this.players.length; i++) {
       let p = this.players[i];
@@ -695,6 +714,10 @@ class GameManager {
     this.enqueuePlayers();
   }
 
+  flopSum(): number {
+    return this.drawPhases.reduce((prev, curr) => prev + curr, 0);
+  }
+
   advanceGameState() {
     /**
      * - Check if we need to advance game state first
@@ -729,26 +752,25 @@ class GameManager {
         return;
       }
       //else no one else can make a move so end game
-      this.flop.push(...this.drawCards(5 - this.flop.length));
+      this.flop.push(...this.drawCards(this.flopSum() - this.flop.length));
       this.gameState = GameState.ROUND_END;
       this.getRoundWinner();
     }
 
     if (this.isRoundOrGameOver()) return;
 
-    if (this.flop.length < 3) {
-      //inital flop
-      this.flop.push(...this.drawCards(3));
-    } else if (this.flop.length === 3) {
-      //turn
-      this.flop.push(...this.drawCards(1));
-    } else if (this.flop.length === 4) {
-      //river
-      this.flop.push(...this.drawCards(1));
-    } else if (this.flop.length === 5) {
-      //all community cards have been drawn, showdown and game end
-      this.gameState = GameState.ROUND_END;
-      this.getRoundWinner();
+    let flopCount = 0;
+    for (let i = 0; i < this.drawPhases.length; i++) {
+      flopCount += this.drawPhases[i];
+      if (this.flop.length < flopCount) {
+        this.flop.push(...this.drawCards(this.drawPhases[i]));
+        break;
+      }
+      if (this.flop.length === this.flopSum()) {
+        this.gameState = GameState.ROUND_END;
+        this.getRoundWinner();
+        break;
+      }
     }
 
     // reset player state from checked to betting after next card pull
@@ -849,21 +871,15 @@ class GameManager {
     if (winners.length === 0) {
       throw new Error("Error! No Winners??");
     }
-    if (winners.length === 1) {
-      this.winnerIDs.push(winners[0].userID);
-      const w = winners[0];
-      w.chips += this.pot;
 
+    //update actions
+    if (winners.length === 1) {
+      const w = winners[0];
       this.actions.push({
         color: ActionColour.WINNER,
         action: `${w.userName} won round with ${handTypeToString(
           getHandType(w.hand, this.flop, this.cardsPerSuit, this.handLimit).type
         )}`,
-      });
-
-      this.actions.push({
-        color: ActionColour.WINNER,
-        action: `${w.userName} gains (${this.pot} chips)!`,
       });
     } else {
       //ties
@@ -872,19 +888,18 @@ class GameManager {
         color: ActionColour.WINNER,
         action: `${split} way tie!`,
       });
+    }
 
-      for (let i = 0; i < winners.length; i++) {
-        const w = winners[i];
-        this.winnerIDs.push(w.userID);
-        w.chips += Math.floor(this.pot / split);
-
-        this.actions.push({
-          color: ActionColour.WINNER,
-          action: `${w.userName} gains (${Math.floor(
-            this.pot / split
-          )} chips)!`,
-        });
-      }
+    for (let i = 0; i < winners.length; i++) {
+      const w = this.playerValidation(winners[i].userID);
+      this.winnerIDs.push(w.userID);
+      w.chips += Math.floor(this.pot / winners.length);
+      this.actions.push({
+        color: ActionColour.WINNER,
+        action: `${w.userName} gains (${Math.floor(
+          this.pot / winners.length
+        )} chips)!`,
+      });
     }
 
     //reset wagers for rest of players
@@ -947,4 +962,5 @@ export {
   getCardNumber,
   handTypeToString,
   playerStateToString,
+  flopSum,
 };

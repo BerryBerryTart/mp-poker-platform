@@ -1,0 +1,14 @@
+.orange-filter {
+  filter: brightness(0) saturate(100%) invert(39%) sepia(91%) saturate(1126%)
+    hue-rotate(346deg) brightness(100%) contrast(103%);
+}
+
+.blue-filter {
+  filter: brightness(0) saturate(100%) invert(45%) sepia(55%) saturate(7133%)
+    hue-rotate(210deg) brightness(100%) contrast(93%);
+}
+
+.purple-filter {
+  filter: brightness(0) saturate(100%) invert(20%) sepia(65%) saturate(5238%)
+    hue-rotate(268deg) brightness(97%) contrast(104%);
+}

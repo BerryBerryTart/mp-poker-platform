@@ -8,6 +8,7 @@ import {
   Space,
   Timeline,
   FloatButton,
+  Modal,
 } from "../antdES";
 import { CardDisplay } from "../CardDisplay/CardDisplay";
 import { ReactNode, useContext, useRef, useState, useEffect } from "react";
@@ -33,6 +34,7 @@ export const GameBoard = () => {
   const [raiseAmt, setRaiseAmt] = useState(0);
   const [userName, setUserName] = useState("");
   const [yourTurn, setYourTurn] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const userID = useRef<string>(v6());
 
@@ -319,12 +321,38 @@ export const GameBoard = () => {
     return <Timeline reverse items={items} />;
   };
 
+  const getInfoModal = () => {
+    return (
+      <Modal
+        open={isModalOpen}
+        destroyOnHidden
+        okText="OK"
+        okButtonProps={{ autoFocus: true, htmlType: "submit" }}
+        footer={
+          <Button type="primary" onClick={() => setIsModalOpen(false)}>
+            OK
+          </Button>
+        }
+      >
+        <Typography.Title level={4} style={{ marginTop: "0px" }}>
+          Game Configuration
+        </Typography.Title>
+        <GameInfo gameConfig={gameConfig} />
+      </Modal>
+    );
+  };
+
   return (
     <div id="game-board-container">
+      {getInfoModal()}
       <div id="players-container">
         <Space>{getPlayers()}</Space>
       </div>
-      <CommunityCards gameState={gameState} userID={userID.current} gameConfig={gameConfig} />
+      <CommunityCards
+        gameState={gameState}
+        userID={userID.current}
+        gameConfig={gameConfig}
+      />
       <div id="action-container">
         <div id="timeline-container">{renderActions()}</div>
         <Typography.Text italic type="secondary">
@@ -398,17 +426,19 @@ export const GameBoard = () => {
                 <img src={Info} style={{ transform: "translateX(-3px)" }} />
               }
               type={theme === Theme.DARK ? "default" : "primary"}
-              tooltip={{
-                overlay: (
-                  <>
-                    <Typography.Title level={4} style={{ marginTop: "0px" }}>
-                      Game Configuration
-                    </Typography.Title>
-                    <GameInfo gameConfig={gameConfig} />
-                  </>
-                ),
-                color: theme === Theme.DARK ? "#262626" : "#f1f1f1ff",
-              }}
+              onClick={() => setIsModalOpen(true)}
+              // tooltip={{
+              //   overlay: (
+              //     <>
+              //       <Typography.Title level={4} style={{ marginTop: "0px" }}>
+              //         Game Configuration
+              //       </Typography.Title>
+              //       <GameInfo gameConfig={gameConfig} />
+              //     </>
+              //   ),
+              //   color: theme === Theme.DARK ? "#262626" : "#f1f1f1ff",
+              //   styles: { body: { width: "350px" } },
+              // }}
             />
             <ThemeToggle />
           </FloatButton.Group>

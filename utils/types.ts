@@ -8,7 +8,6 @@ interface SerialisedGame {
   gameState: GameState;
   winnerIDs: string[];
   actions: GameActionType[];
-  
 }
 
 interface Player {
@@ -28,6 +27,7 @@ interface GameConfigType {
   cardsPerSuit: number;
   handLimit: number;
   totalSuits: number;
+  drawPhases: number[] | string;
 }
 
 interface AuthType {
