@@ -4,6 +4,7 @@
   "description": "multiplayer poker platform",
   "scripts": {
     "start:back": "tsx watch ./backend/index.ts",
+    "start:bot": "tsx watch ./bot/bot.ts",
     "start:front": "vite --mode dev",
     "build:front": "vite build --mode prod",
     "preview": "vite preview",
