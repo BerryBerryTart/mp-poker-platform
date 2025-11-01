@@ -112,17 +112,12 @@ export const Admin = () => {
             <Typography.Text style={{ cursor: "default" }}>
               Chips: {p[i].chips}
             </Typography.Text>
-            {adminGameState?.gameState !== GameState.ROUND_END &&
-              adminGameState?.gameState !== GameState.GAME_END && (
-                <>
-                  <Typography.Text style={{ cursor: "default" }}>
-                    Wager: {p[i].wager}
-                  </Typography.Text>
-                  <Typography.Text style={{ cursor: "default" }}>
-                    {playerStateToString(p[i].state)}
-                  </Typography.Text>
-                </>
-              )}
+            <Typography.Text style={{ cursor: "default" }}>
+              Wager: {p[i].wager}
+            </Typography.Text>
+            <Typography.Text style={{ cursor: "default" }}>
+              {playerStateToString(p[i].state)}
+            </Typography.Text>
           </Space>
           <span className="card-content mini-hand">{renderHand(p[i])}</span>
           <Typography.Text italic type="secondary">
@@ -306,7 +301,7 @@ export const Admin = () => {
     <div id="admin-container">
       {getModal()}
       <div id="players-container">
-        <Space>{getPlayers()}</Space>
+        <Space align="start">{getPlayers()}</Space>
       </div>
       <div id="game-container">
         <CommunityCards gameState={adminGameState} gameConfig={gameConfig} />

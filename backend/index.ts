@@ -44,11 +44,14 @@ function broadcastGame(adminOnly = false) {
 
 function sendGameStateToAll(adminOnly = false) {
   // rebroadcast with next next round game state
-  if (game.gameState === GameState.ROUND_END && game.nextRoundDelay && !game.manualNextRound) {
+  if (game.gameState === GameState.ROUND_END && !game.manualNextRound) {
     setTimeout(() => {
-      console.log("STARTING NEXT ROUND");
-      game.setupGame(true);
-      broadcastGame(adminOnly);
+      try {
+        game.setupGame(true);
+        broadcastGame(adminOnly);
+      } catch (error) {
+        console.log(error);
+      }
     }, game.nextRoundDelay * 1000);
   }
   broadcastGame(adminOnly);
@@ -151,6 +154,7 @@ io.of("/admin").on(SocketEvent.NEW_CONNECTION, (socket: GameSocket) => {
     }
   });
   socket.on(SocketEvent.ADMIN_NEXT_ROUND, () => {
+    console.log("START NEXT ROUND");
     try {
       game.setupGame(true);
       sendGameStateToAll();

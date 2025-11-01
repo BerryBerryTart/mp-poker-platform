@@ -489,6 +489,8 @@ const playerStateToString = (state: PlayerState): string => {
       return "Folded";
     case PlayerState.SPECTATING:
       return "Spectating";
+    case PlayerState.OUT:
+      return "Out";
     default:
       return "";
   }
@@ -509,8 +511,8 @@ class GameManager {
   minBuyIn: number = 10;
   winnerIDs: string[] = [];
   actions: GameActionType[] = [];
-  manualNextRound = true;
-  nextRoundDelay: number = 5;
+  manualNextRound = false;
+  nextRoundDelay: number = 0;
   totalSuits = 4;
   cardsPerSuit = 13;
   handLimit = 5;
@@ -553,6 +555,9 @@ class GameManager {
         }
       }
     }
+    if (this.actions.length > 50) {
+      this.actions.shift();
+    }
 
     return {
       flop: this.flop,
@@ -583,7 +588,8 @@ class GameManager {
     if (config.minBuyIn) this.minBuyIn = config.minBuyIn;
     if (typeof config.manualNextRound === "boolean")
       this.manualNextRound = config.manualNextRound;
-    if (config.nextRoundDelay) this.nextRoundDelay = config.nextRoundDelay;
+    if (typeof config.nextRoundDelay === "number")
+      this.nextRoundDelay = config.nextRoundDelay;
     if (config.cardsPerSuit) this.cardsPerSuit = config.cardsPerSuit;
     if (config.handLimit) this.handLimit = config.handLimit;
     if (config.totalSuits) this.totalSuits = config.totalSuits;
@@ -625,12 +631,14 @@ class GameManager {
     shuffle(this.deck);
     for (let i = 0; i < this.players.length; i++) {
       let p = this.players[i];
+      p.hand = []; //reset hand just in case
       if (p.state === PlayerState.OUT) continue;
+      if (!nextRound) p.chips = this.initalHandAmt;
       p.hand = [...this.drawCards(2)];
       p.state = PlayerState.BETTING;
-      p.chips -= this.minBuyIn;
-      p.wager += this.minBuyIn;
-      this.pot += this.minBuyIn;
+      p.chips -= Math.min(this.minBuyIn, p.chips);
+      p.wager += Math.min(this.minBuyIn, p.chips);
+      this.pot += Math.min(this.minBuyIn, p.chips);
     }
     this.gameState = GameState.PLAYERS_BETTING;
     if (nextRound) {
@@ -731,7 +739,7 @@ class GameManager {
     for (let i = 0; i < this.players.length; i++) {
       let p = this.players[i];
       //players still betting so don't advance
-      if (p.state === PlayerState.BETTING) {
+      if (p.state === PlayerState.BETTING && p.chips > 0) {
         return;
       }
     }
@@ -809,8 +817,6 @@ class GameManager {
     this.deck = this.generateDeck();
     this.pot = 0;
     this.gameState = GameState.PRE_GAME;
-    this.initalHandAmt = 100;
-    this.minBuyIn = 10;
     this.playerQueue = [];
     this.flop = [];
     this.actions = [];
@@ -963,4 +969,5 @@ export {
   handTypeToString,
   playerStateToString,
   flopSum,
+  getHandTypeRank,
 };
